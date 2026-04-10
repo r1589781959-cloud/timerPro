@@ -28,6 +28,49 @@ DATA_FILE = os.path.join(SCRIPT_DIR, "active_data.json")
 HISTORY_FILE = os.path.join(SCRIPT_DIR, "history_log.csv")
 CONFIG_FILE = os.path.join(SCRIPT_DIR, "shop_config.json")
 
+
+def history_row_to_excel_numeric(row):
+    """导出 Excel 时：序号、总金额、团购价值、结算金额 使用数值类型（列索引 2、7、9、10）。"""
+    row = list(row) if row is not None else []
+    while len(row) < 14:
+        row.append("--")
+
+    def _parse_int(v):
+        if v is None:
+            return v
+        if isinstance(v, (int, float)) and not isinstance(v, bool):
+            return int(v)
+        s = str(v).strip()
+        if not s or s == "--":
+            return v
+        s = s.replace(",", "").replace("¥", "").replace("元", "")
+        try:
+            return int(round(float(s)))
+        except (ValueError, TypeError, OverflowError):
+            return v
+
+    def _parse_float(v):
+        if v is None:
+            return v
+        if isinstance(v, (int, float)) and not isinstance(v, bool):
+            return float(v)
+        s = str(v).strip()
+        if not s or s == "--":
+            return v
+        s = s.replace(",", "").replace("¥", "").replace("元", "")
+        try:
+            return float(s)
+        except (ValueError, TypeError, OverflowError):
+            return v
+
+    out = row[:14]
+    out[2] = _parse_int(out[2])
+    out[7] = _parse_float(out[7])
+    out[9] = _parse_float(out[9])
+    out[10] = _parse_float(out[10])
+    return out
+
+
 DEFAULT_CONFIG = {
     "price_base": 29.9, "time_base": 120, "price_overtime": 10.0, "buffer_min": 10,
     "admin_pwd": "8888", "price_unlimited": 59.9, "price_single_board": 39.9,
@@ -1849,9 +1892,14 @@ class PerfectTimerApp:
                 w.writerow(["开始", "结束", "序号", "标识", "模式", "总时长", "实玩时长", "总金额", "团购类型", "团购价值", "结算金额", "备注", "定额时长", "暂停详情"])
             m_cn = {"pay_later": "先玩后付", "fixed": "定额", "unlimited": "全天畅玩", "single_board": "单板不限", "group_buy": "团购"}.get(mode, mode)
             clean_remark = remark.replace("\n", " ").replace("\r", "")
+            try:
+                gid_num = int(gid)
+            except (TypeError, ValueError):
+                gid_num = gid
             w.writerow([
-                start.strftime("%Y-%m-%d %H:%M"), end.strftime("%Y-%m-%d %H:%M"), gid, phone, m_cn,
-                total_dur, play_dur, round(cost + gb_voucher_price, 2), gb_type, round(gb_voucher_price, 2), round(cost, 2), clean_remark, fixed_str, pause_info
+                start.strftime("%Y-%m-%d %H:%M"), end.strftime("%Y-%m-%d %H:%M"), gid_num, phone, m_cn,
+                total_dur, play_dur, round(float(cost) + float(gb_voucher_price), 2), gb_type,
+                round(float(gb_voucher_price), 2), round(float(cost), 2), clean_remark, fixed_str, pause_info
             ])
 
     def open_gb_pricing_dialog(self, parent_win, gb_data):
@@ -3125,11 +3173,11 @@ class PerfectTimerApp:
                     if scope == "current":
                         for item_id in tree.get_children():
                             values = tree.item(item_id)['values']
-                            ws.append(list(values))
+                            ws.append(history_row_to_excel_numeric(list(values)))
                     else:
                         for row in all_rows:
-                            r = row[:14] if len(row) >= 14 else row + ["--"] * (14 - len(row))
-                            ws.append(r)
+                            r = row[:14] if len(row) >= 14 else list(row) + ["--"] * (14 - len(row))
+                            ws.append(history_row_to_excel_numeric(r))
 
                     # 自动调整列宽
                     for col in ws.columns:
