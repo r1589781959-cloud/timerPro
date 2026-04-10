@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(chcp 65001)",
+      "Bash(python \"全系统计费模式完整测试.py\")",
+      "Bash(python:*)",
+      "Bash(tasklist)",
+      "Bash(ls:*)"
+    ]
+  }
+}
