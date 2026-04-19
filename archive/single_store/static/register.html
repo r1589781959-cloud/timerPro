@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>商家注册 - TimerPro</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        .step-indicator {
+            transition: all 0.3s ease;
+        }
+        .step-indicator.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .step-indicator.completed {
+            background: #10b981;
+            color: white;
+        }
+        .input-field {
+            transition: all 0.2s ease;
+        }
+        .input-field:focus {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -10px rgba(102, 126, 234, 0.5);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -10px rgba(102, 126, 234, 0.5);
+        }
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .fade-enter-active, .fade-leave-active {
+            transition: opacity 0.3s ease;
+        }
+        .fade-enter-from, .fade-leave-to {
+            opacity: 0;
+        }
+        .slide-up-enter-active, .slide-up-leave-active {
+            transition: all 0.3s ease;
+        }
+        .slide-up-enter-from, .slide-up-leave-to {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        .success-checkmark {
+            animation: checkmark 0.8s ease-in-out 0.4s forwards;
+        }
+        @keyframes checkmark {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background-color: #f00;
+            animation: confetti-fall 3s ease-in-out forwards;
+        }
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(-100vh) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app" class="min-h-screen flex items-center justify-center p-4">
+        <div class="glass-card rounded-2xl w-full max-w-2xl p-8">
+            <!-- Logo和标题 -->
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl mb-4">
+                    <i class="ri-store-3-line text-white text-3xl"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-gray-800">商家注册</h1>
+                <p class="text-gray-500 mt-2">加入 TimerPro，开启智能收银新时代</p>
+            </div>
+
+            <!-- 步骤指示器 -->
+            <div class="flex items-center justify-center mb-8">
+                <div
+                    v-for="(step, index) in steps"
+                    :key="index"
+                    class="flex items-center"
+                >
+                    <div
+                        class="step-indicator w-10 h-10 rounded-full flex items-center justify-center font-semibold"
+                        :class="{
+                            'active': currentStep === index + 1,
+                            'completed': currentStep > index + 1
+                        }"
+                    >
+                        <i v-if="currentStep > index + 1" class="ri-check-line"></i>
+                        <span v-else>{{ index + 1 }}</span>
+                    </div>
+                    <div v-if="index < steps.length - 1" class="w-16 h-1 mx-2 bg-gray-200 rounded">
+                        <div
+                            class="h-full bg-gradient-to-r from-indigo-500 to-purple-600 rounded transition-all"
+                            :style="{ width: currentStep > index + 1 ? '100%' : '0%' }"
+                        ></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 表单区域 -->
+            <transition name="slide-up" mode="out-in">
+                <!-- 步骤1: 基本信息 -->
+                <div v-if="currentStep === 1" key="step1">
+                    <form @submit.prevent="goToStep2" class="space-y-5">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">店铺名称 *</label>
+                            <input
+                                v-model="form.shopName"
+                                type="text"
+                                class="input-field w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none"
+                                placeholder="请输入店铺名称"
+                                required
+                            >
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">商家编码</label>
+                            <div class="relative">
+                                <input
+                                    v-model="form.shopCode"
+                                    type="text"
+                                    class="input-field w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none pr-20"
+                                    placeholder="留空则自动生成"
+                                >
+                                <button
+                                    type="button"
+                                    @click="checkShopCode"
+                                    :disabled="!form.shopCode || checkingCode"
+                                    class="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-700 disabled:text-gray-400 disabled:cursor-not-allowed transition"
+                                >
+                                    {{ checkingCode ? '检查中...' : '检查可用' }}
+                                </button>
+                            </div>
+                            <p v-if="codeCheckResult" class="mt-1 text-sm" :class="codeCheckResult.available ? 'text-green-600' : 'text-red-600'">
+                                {{ codeCheckResult.message }}
+                            </p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">联系人手机号 *</label>
+                            <input
+                                v-model="form.contactPhone"
+                                type="tel"
+                                class="input-field w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none"
+                                placeholder="请输入11位手机号"
+                                required
+                            >
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">管理员姓名 *</label>
+                            <input
+                                v-model="form.adminName"
+                                type="text"
+                                class="input-field w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none"
+                                placeholder="请输入管理员真实姓名"
+                                required
+                            >
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">登录密码 *</label>
+                            <input
+                                v-model="form.password"
+                                type="password"
+                                class="input-field w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none"
+                                placeholder="6-20位密码"
+                                required
+                            >
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">确认密码 *</label>
+                            <input
+                                v-model="form.passwordConfirm"
+                                type="password"
+                                class="input-field w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none"
+                                placeholder="请再次输入密码"
+                                required
+                            >
+                            <p v-if="form.password && form.passwordConfirm && form.password !== form.passwordConfirm" class="mt-1 text-sm text-red-600">
+                                两次密码不一致
+                            </p>
+                        </div>
+
+                        <button
+                            type="submit"
+                            class="btn-primary w-full py-3 rounded-xl text-white font-semibold text-lg"
+                        >
+                            下一步
+                        </button>
+                    </form>
+                </div>
+
+                <!-- 步骤2: 验证和完成 -->
+                <div v-else-if="currentStep === 2" key="step2">
+                    <form @submit.prevent="submitRegister" class="space-y-5">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">手机验证码 *</label>
+                            <div class="flex gap-3">
+                                <input
+                                    v-model="form.verifyCode"
+                                    type="text"
+                                    class="input-field flex-1 px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none"
+                                    placeholder="请输入6位验证码"
+                                    maxlength="6"
+                                    required
+                                >
+                                <button
+                                    type="button"
+                                    @click="sendVerifyCode"
+                                    :disabled="sendingCode || countdown > 0"
+                                    class="btn-primary px-6 py-3 rounded-xl text-white font-medium whitespace-nowrap"
+                                >
+                                    {{ sendingCode ? '发送中...' : countdown > 0 ? `${countdown}秒后重发` : '发送验证码' }}
+                                </button>
+                            </div>
+                            <p class="mt-1 text-xs text-gray-500">
+                                测试环境验证码将显示在控制台
+                            </p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">店铺地址</label>
+                            <input
+                                v-model="form.address"
+                                type="text"
+                                class="input-field w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none"
+                                placeholder="请输入店铺地址（可选）"
+                            >
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">店铺描述</label>
+                            <textarea
+                                v-model="form.description"
+                                class="input-field w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none resize-none"
+                                placeholder="请简要描述您的店铺（可选）"
+                                rows="3"
+                            ></textarea>
+                        </div>
+
+                        <div class="bg-blue-50 rounded-xl p-4">
+                            <div class="flex items-start gap-3">
+                                <i class="ri-information-line text-blue-500 mt-0.5"></i>
+                                <div class="text-sm text-blue-700">
+                                    <p class="font-medium mb-1">注册信息确认</p>
+                                    <p class="text-blue-600">
+                                        店铺名称: <strong>{{ form.shopName }}</strong>
+                                    </p>
+                                    <p class="text-blue-600">
+                                        手机号: <strong>{{ form.contactPhone }}</strong>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-3">
+                            <button
+                                type="button"
+                                @click="currentStep = 1"
+                                class="flex-1 py-3 rounded-xl border-2 border-gray-200 text-gray-600 font-semibold hover:bg-gray-50 transition"
+                            >
+                                上一步
+                            </button>
+                            <button
+                                type="submit"
+                                :disabled="submitting"
+                                class="btn-primary flex-1 py-3 rounded-xl text-white font-semibold disabled:opacity-60"
+                            >
+                                {{ submitting ? '注册中...' : '完成注册' }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- 步骤3: 注册成功 -->
+                <div v-else-if="currentStep === 3" key="step3" class="text-center py-12">
+                    <div class="success-checkmark inline-flex items-center justify-center w-24 h-24 bg-green-100 rounded-full mb-6">
+                        <i class="ri-check-line text-green-500 text-5xl"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">注册成功！</h2>
+                    <p class="text-gray-600 mb-6">欢迎加入 TimerPro</p>
+
+                    <div class="bg-indigo-50 rounded-xl p-6 mb-8 max-w-sm mx-auto">
+                        <p class="text-sm text-indigo-700 mb-2">您的商家编码是</p>
+                        <p class="text-2xl font-bold text-indigo-600">{{ registeredShopCode }}</p>
+                        <p class="text-xs text-indigo-500 mt-2">请妥善保管，登录时需要使用</p>
+                    </div>
+
+                    <button
+                        @click="redirectToLogin"
+                        class="btn-primary px-8 py-3 rounded-xl text-white font-semibold text-lg"
+                    >
+                        立即登录
+                    </button>
+                </div>
+            </transition>
+
+            <!-- 登录链接 -->
+            <div v-if="currentStep < 3" class="text-center mt-8 pt-6 border-t border-gray-200">
+                <p class="text-gray-600">
+                    已有账号？
+                    <a href="/login.html" class="text-indigo-600 hover:text-indigo-700 font-medium">立即登录</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue
+
+        createApp({
+            data() {
+                return {
+                    currentStep: 1,
+                    steps: ['基本信息', '验证手机', '完成'],
+                    form: {
+                        shopName: '',
+                        shopCode: '',
+                        contactPhone: '',
+                        adminName: '',
+                        password: '',
+                        passwordConfirm: '',
+                        verifyCode: '',
+                        address: '',
+                        description: ''
+                    },
+                    checkingCode: false,
+                    codeCheckResult: null,
+                    sendingCode: false,
+                    countdown: 0,
+                    submitting: false,
+                    registeredShopCode: ''
+                }
+            },
+            methods: {
+                async checkShopCode() {
+                    if (!this.form.shopCode) return
+
+                    this.checkingCode = true
+                    try {
+                        const response = await fetch(`/api/merchants/check-code?code=${encodeURIComponent(this.form.shopCode)}`)
+                        const data = await response.json()
+                        this.codeCheckResult = data
+                    } catch (error) {
+                        this.codeCheckResult = {
+                            available: false,
+                            message: '检查失败，请稍后重试'
+                        }
+                    } finally {
+                        this.checkingCode = false
+                    }
+                },
+                goToStep2() {
+                    // 验证必填字段
+                    if (!this.form.shopName || !this.form.contactPhone || !this.form.adminName || !this.form.password) {
+                        alert('请填写所有必填字段')
+                        return
+                    }
+
+                    // 验证手机号格式
+                    if (!/^1[3-9]\d{9}$/.test(this.form.contactPhone)) {
+                        alert('手机号格式不正确')
+                        return
+                    }
+
+                    // 验证密码长度
+                    if (this.form.password.length < 6 || this.form.password.length > 20) {
+                        alert('密码长度必须在6-20位之间')
+                        return
+                    }
+
+                    // 验证密码确认
+                    if (this.form.password !== this.form.passwordConfirm) {
+                        alert('两次密码不一致')
+                        return
+                    }
+
+                    // 验证商家编码（如果填写了）
+                    if (this.form.shopCode && this.codeCheckResult && !this.codeCheckResult.available) {
+                        alert('商家编码已被使用，请更换')
+                        return
+                    }
+
+                    this.currentStep = 2
+                },
+                async sendVerifyCode() {
+                    if (this.countdown > 0) return
+
+                    this.sendingCode = true
+                    try {
+                        const response = await fetch('/api/merchants/verify-code/send', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                phone: this.form.contactPhone,
+                                code_type: 'register'
+                            })
+                        })
+
+                        if (response.ok) {
+                            this.countdown = 60
+                            const timer = setInterval(() => {
+                                this.countdown--
+                                if (this.countdown <= 0) {
+                                    clearInterval(timer)
+                                }
+                            }, 1000)
+                        } else {
+                            const data = await response.json()
+                            alert(data.detail || '发送失败')
+                        }
+                    } catch (error) {
+                        alert('发送失败，请稍后重试')
+                    } finally {
+                        this.sendingCode = false
+                    }
+                },
+                async submitRegister() {
+                    if (!this.form.verifyCode) {
+                        alert('请输入验证码')
+                        return
+                    }
+
+                    this.submitting = true
+                    try {
+                        const response = await fetch('/api/merchants/register', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                shop_name: this.form.shopName,
+                                shop_code: this.form.shopCode || undefined,
+                                contact_phone: this.form.contactPhone,
+                                admin_name: this.form.adminName,
+                                password: this.form.password,
+                                password_confirm: this.form.passwordConfirm,
+                                verify_code: this.form.verifyCode,
+                                address: this.form.address || undefined,
+                                description: this.form.description || undefined
+                            })
+                        })
+
+                        if (response.ok) {
+                            const data = await response.json()
+                            this.registeredShopCode = data.shop.shop_code
+
+                            // 保存token到localStorage
+                            localStorage.setItem('access_token', data.access_token)
+                            localStorage.setItem('refresh_token', data.refresh_token)
+                            localStorage.setItem('user_info', JSON.stringify({
+                                shop: data.shop,
+                                user: data.user
+                            }))
+
+                            this.currentStep = 3
+                            this.createConfetti()
+                        } else {
+                            const data = await response.json()
+                            alert(data.detail || '注册失败')
+                        }
+                    } catch (error) {
+                        alert('注册失败，请稍后重试')
+                    } finally {
+                        this.submitting = false
+                    }
+                },
+                redirectToLogin() {
+                    window.location.href = '/login.html'
+                },
+                createConfetti() {
+                    const colors = ['#667eea', '#764ba2', '#10b981', '#f59e0b', '#ef4444']
+                    for (let i = 0; i < 50; i++) {
+                        setTimeout(() => {
+                            const confetti = document.createElement('div')
+                            confetti.className = 'confetti'
+                            confetti.style.left = Math.random() * 100 + 'vw'
+                            confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)]
+                            confetti.style.animationDuration = (Math.random() * 2 + 2) + 's'
+                            document.body.appendChild(confetti)
+
+                            setTimeout(() => {
+                                confetti.remove()
+                            }, 3000)
+                        }, i * 30)
+                    }
+                }
+            }
+        }).mount('#app')
+    </script>
+</body>
+</html>

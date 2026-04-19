@@ -1,0 +1,49 @@
+{
+    "price_overtime": 10,
+    "price_unlimited": 39.9,
+    "price_single_board": 39.9,
+    "buffer_min": 10,
+    "step_config": [
+        {
+            "minutes": 60,
+            "price": 10
+        },
+        {
+            "minutes": 120,
+            "price": 18
+        },
+        {
+            "minutes": 180,
+            "price": 25
+        }
+    ],
+    "group_buys": [
+        {
+            "name": "定额1小时",
+            "type": "fixed",
+            "price": 9.9,
+            "persons": 1,
+            "limit_min": 60,
+            "start_time": "00:00",
+            "end_time": "23:59"
+        },
+        {
+            "name": "定额2小时2人",
+            "type": "fixed",
+            "price": 29,
+            "persons": 2,
+            "limit_min": 120,
+            "start_time": "00:00",
+            "end_time": "23:59"
+        }
+    ],
+    "alert_enabled": true,
+    "price_base": 10.9,
+    "time_base": 1,
+    "admin_pwd": "8888",
+    "calc_mode": "exact",
+    "step_n": 10,
+    "step_y": 2,
+    "step_k": 2,
+    "ceil_x": 4
+}

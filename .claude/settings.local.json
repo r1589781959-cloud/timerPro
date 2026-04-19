@@ -5,7 +5,17 @@
       "Bash(python \"全系统计费模式完整测试.py\")",
       "Bash(python:*)",
       "Bash(tasklist)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(curl -s http://localhost:8000/api/data/active)",
+      "Bash(timeout 3 sleep 3)",
+      "Bash(pkill -f \"python -m http.server 8080\")",
+      "Bash(grep -E '\\\\.\\(py|md\\)$')",
+      "Bash(curl -s http://localhost:8000/api/health)",
+      "Bash(del /F timerpro_saas.db)",
+      "Bash(curl -s -X POST http://localhost:8000/api/merchants/login -H \"Content-Type: application/json\" -d '{\"shop_code\": \"starbilliards\", \"phone\": \"13800138000\", \"password\": \"admin123\"}')",
+      "Bash(curl *)",
+      "Bash(python3)",
+      "Bash(python3 -c \"import sys, json; d=json.load\\(sys.stdin\\); print\\('登录成功:', 'access_token' in d\\); print\\('商家:', d.get\\('shop', {}\\).get\\('shop_name'\\)\\)\")"
     ]
   }
 }

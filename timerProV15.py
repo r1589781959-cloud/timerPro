@@ -3215,6 +3215,16 @@ class PerfectTimerApp:
         for index, (val, k) in enumerate(l): tv.move(k, '', index)
         tv.heading(col, command=lambda: self.treeview_sort_column(tv, col, not reverse))
 
+    def history_row_to_excel_numeric(row):
+        """将历史记录行转换为适合Excel导出的格式"""
+        result = []
+        for item in row:
+            try:
+                result.append(float(item))
+            except (ValueError, TypeError):
+                result.append(item)
+        return result
+
     def delete_history_items(self, tree):
         selected = tree.selection()
         if not selected: return

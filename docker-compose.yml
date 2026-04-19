@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  timerpro-web:
+    build: .
+    container_name: timerpro_pos
+    restart: always
+    ports:
+      - "8000:8000"
+    volumes:
+      # 将宿主机的数据文件挂载进容器，防止重启导致数据丢失
+      - ./shop_config.json:/app/shop_config.json
+      - ./active_data.json:/app/active_data.json
+      - ./history_data.json:/app/history_data.json
+      - ./history_log.csv:/app/history_log.csv
+    environment:
+      - TZ=Asia/Shanghai

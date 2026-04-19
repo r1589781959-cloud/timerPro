@@ -1,0 +1,38 @@
+[
+  {
+    "order_id": "1",
+    "phone": "9944",
+    "mode": "pay_later",
+    "mode_text": "先玩后付",
+    "start_time": "2026-04-13 09:29:28",
+    "end_time": "2026-04-13 09:29:47",
+    "total_dur": "19秒",
+    "play_dur": "19秒",
+    "total_price": 29.9,
+    "actual_total": 29.9,
+    "remark": "",
+    "fixed_str": "--",
+    "pause_str": "无",
+    "gb_type": "",
+    "gb_voucher": 0.0,
+    "checkout_time": "2026-04-13 09:29:47"
+  },
+  {
+    "order_id": "2",
+    "phone": "99666",
+    "mode": "pay_later",
+    "mode_text": "先玩后付",
+    "start_time": "2026-04-13 09:31:50",
+    "end_time": "2026-04-13 09:31:54",
+    "total_dur": "4秒",
+    "play_dur": "4秒",
+    "total_price": 10.9,
+    "actual_total": 10.9,
+    "remark": "",
+    "fixed_str": "--",
+    "pause_str": "无",
+    "gb_type": "",
+    "gb_voucher": 0.0,
+    "checkout_time": "2026-04-13 09:31:54"
+  }
+]

@@ -1,0 +1,150 @@
+<view class="container">
+  <!-- 顶部概览 -->
+  <view class="header-banner">
+    <view class="stats-row">
+      <view class="stat-item">
+        <text class="stat-label">正在上机</text>
+        <text class="stat-value">{{orders.length}}</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-label">今日营收</text>
+        <text class="stat-value">¥0.00</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 操作栏 -->
+  <view class="action-bar flex justify-between items-center">
+    <button class="btn-open" bindtap="onOpenTable">➕ 快速开台</button>
+    <view class="refresh-icon" bindtap="fetchActiveData">🔄</view>
+  </view>
+
+  <!-- 搜索与筛选 (响应式处理) -->
+  <view class="filter-row flex gap-2">
+    <input class="search-input flex-1" placeholder="🔍 搜索备注/台号" bindinput="onInputSearch" value="{{searchQuery}}" />
+    <picker mode="selector" range="{{['最新开台 ↓', '最早开台 ↑', '台号排序 A-Z', '进度/超时 ↓']}}" bindchange="onSortChange">
+      <view class="sort-picker">排序 ↓</view>
+    </picker>
+  </view>
+
+  <!-- 订单列表 (响应式 Grid 布局) -->
+  <scroll-view scroll-y class="order-list-scroll">
+    <view class="order-grid">
+      <block wx:for="{{orders}}" wx:key="id">
+        <view class="order-card card {{item.isOvertime ? 'overtime-card' : ''}} {{item.is_paused ? 'suspended-card' : ''}}">
+          <!-- 第一行：标识与状态 -->
+          <view class="card-title-row flex justify-between items-center">
+            <text class="order-id">{{item.phone}}</text>
+            <view class="status-badge {{item.is_paused ? 'bg-purple' : 'bg-green'}}">
+              {{item.is_paused ? '暂停中' : '运行中'}}
+            </view>
+          </view>
+          
+          <!-- 第二行：详情网格 -->
+          <view class="info-grid flex justify-between">
+            <view class="detail-item">
+              <text class="detail-label">计费模式</text>
+              <text class="detail-val">{{item.mode}}</text>
+            </view>
+            <view class="detail-item">
+              <text class="detail-label">人数</text>
+              <text class="detail-val">{{item.count}} 人</text>
+            </view>
+            <view class="detail-item text-right">
+              <text class="detail-label">开台时间</text>
+              <text class="detail-val">{{item.start_time_short || '12:00'}}</text>
+            </view>
+          </view>
+
+          <!-- 第三行：计时核心 -->
+          <view class="card-body">
+            <view class="time-main {{item.isOvertime ? 'text-red' : ''}}">{{item.timeStr}}</view>
+            <view class="progress-bar">
+              <view class="progress-inner {{item.isOvertime ? 'bg-red' : ''}}" style="width: {{item.progress}}%"></view>
+            </view>
+          </view>
+          
+          <!-- 第四行：操作按钮 -->
+          <view class="card-footer flex gap-2">
+            <button class="btn-sm btn-checkout" size="mini">结账</button>
+            <button class="btn-sm btn-detail" size="mini">详情</button>
+          </view>
+        </view>
+      </block>
+      
+      <!-- 空状态 -->
+      <view wx:if="{{orders.length === 0 && !loading}}" class="empty-state">
+        <text>暂无正在上机的订单</text>
+      </view>
+    </view>
+  </scroll-view>
+
+  <!-- 快速开台弹窗 -->
+  <view class="modal-overlay" wx:if="{{showOpenDialog}}" bindtap="onCloseDialog">
+    <view class="modal-box" catchtap="stopBubble">
+      <view class="modal-title">➕ 快速开台</view>
+      
+      <view class="form-item">
+        <text class="label">标识号/台号</text>
+        <input class="input" placeholder="输入标识或台号" value="{{newOrder.phone}}" bindinput="onInputPhone" />
+      </view>
+
+      <view class="flex gap-2">
+        <!-- 自定义下拉框：仿 Web 风格 -->
+        <view class="form-item flex-1 relative">
+          <text class="label">计费模式</text>
+          <view class="picker-val flex justify-between items-center" bindtap="toggleModeDropdown">
+            <text>{{selectedModeLabel}}</text>
+            <text class="arrow">▼</text>
+          </view>
+          <!-- 下拉选项列表 -->
+          <view class="custom-dropdown" wx:if="{{showModeDropdown}}">
+            <view wx:for="{{modeLabels}}" wx:key="*this" class="dropdown-item" 
+                  bindtap="selectMode" data-val="{{modeValues[index]}}" data-label="{{item}}">
+              {{item}}
+            </view>
+          </view>
+        </view>
+        <view class="form-item w-20">
+          <text class="label">数量</text>
+          <input class="input text-center" type="number" value="{{newOrder.count}}" bindinput="onInputCount" />
+        </view>
+      </view>
+
+      <!-- 动态配置项：固定时长 -->
+      <view class="form-item" wx:if="{{newOrder.mode === 'fixed'}}">
+        <text class="label">设定时长 (分钟)</text>
+        <view class="flex gap-2 items-center">
+          <input class="input flex-1" type="number" placeholder="输入分钟..." value="{{newOrder.configId}}" bindinput="onInputConfigId" />
+          <text class="unit">min</text>
+        </view>
+        <view class="quick-tags flex flex-wrap gap-2 mt-2">
+          <view wx:for="{{[60, 120, 180, 240, 360, 480]}}" wx:key="*this" 
+                class="tag {{newOrder.configId == item ? 'active' : ''}}" 
+                bindtap="onQuickSelectTime" data-val="{{item}}">{{item}}</view>
+        </view>
+      </view>
+
+      <!-- 动态配置项：团购套餐选择 -->
+      <view class="form-item" wx:if="{{newOrder.mode === 'group_buy' || newOrder.mode === 'time_slot'}}">
+        <text class="label">选择团购/时段套餐</text>
+        <view class="quick-tags flex flex-wrap gap-2">
+          <view wx:for="{{shopConfig.group_buys}}" wx:key="name" 
+                class="tag {{newOrder.configId.name == item.name ? 'active' : ''}}" 
+                bindtap="onSelectGroupBuy" data-item="{{item}}">{{item.name}}</view>
+        </view>
+      </view>
+
+      <!-- 备注信息 -->
+      <view class="form-item">
+        <text class="label">备注信息 (可选)</text>
+        <input class="input" placeholder="输入备注描述" value="{{newOrder.remark}}" bindinput="onInputRemark" />
+      </view>
+
+      <view class="modal-actions flex gap-2">
+        <button class="btn-cancel flex-1" bindtap="onCloseDialog">取消</button>
+        <button class="btn-confirm flex-1" bindtap="onSubmitOpen">确认开台</button>
+      </view>
+    </view>
+  </view>
+</view>

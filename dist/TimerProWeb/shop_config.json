@@ -1,0 +1,30 @@
+{
+    "price_overtime": 10.9,
+    "price_unlimited": 58.8,
+    "price_single_board": 29.9,
+    "buffer_min": 10,
+    "step_config": [
+        {
+            "minutes": 60,
+            "price": 10
+        },
+        {
+            "minutes": 120,
+            "price": 18
+        },
+        {
+            "minutes": 180,
+            "price": 25
+        }
+    ],
+    "group_buys": [],
+    "alert_enabled": true,
+    "price_base": 10.9,
+    "time_base": 60,
+    "admin_pwd": "8888",
+    "calc_mode": "step",
+    "step_n": 10,
+    "step_y": 2,
+    "step_k": 2,
+    "ceil_x": 5
+}
