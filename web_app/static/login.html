@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,44 +13,54 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
         }
+
         .glass-card {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
         }
+
         .input-field {
             transition: all 0.2s ease;
         }
+
         .input-field:focus {
             transform: translateY(-2px);
             box-shadow: 0 10px 20px -10px rgba(102, 126, 234, 0.5);
         }
+
         .btn-primary {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             transition: all 0.3s ease;
         }
+
         .btn-primary:hover {
             transform: translateY(-2px);
             box-shadow: 0 10px 20px -10px rgba(102, 126, 234, 0.5);
         }
+
         .btn-primary:active {
             transform: translateY(0);
         }
+
         .slide-up-enter-active {
             transition: all 0.4s ease;
         }
+
         .slide-up-enter-from {
             opacity: 0;
             transform: translateY(20px);
         }
     </style>
 </head>
+
 <body>
     <div id="app" class="min-h-screen flex items-center justify-center p-4">
         <div class="glass-card rounded-2xl w-full max-w-md p-8">
             <!-- Logo和标题 -->
             <div class="text-center mb-8">
-                <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl mb-4">
+                <div
+                    class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl mb-4">
                     <i class="ri-store-3-line text-white text-3xl"></i>
                 </div>
                 <h1 class="text-2xl font-bold text-gray-800">欢迎回来</h1>
@@ -64,27 +75,20 @@
                         <label class="block text-sm font-medium text-gray-700 mb-2">商家编码</label>
                         <div class="relative">
                             <i class="ri-store-2-line absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                            <input
-                                v-model="loginForm.shopCode"
-                                type="text"
+                            <input v-model="loginForm.shopCode" type="text"
                                 class="input-field w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none"
-                                placeholder="选填"
-                            >
+                                placeholder="选填">
                         </div>
                     </div>
 
-                    <!-- 手机号 -->
+                    <!-- 邮箱 -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">手机号 *</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">邮箱地址 *</label>
                         <div class="relative">
-                            <i class="ri-smartphone-line absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                            <input
-                                v-model="loginForm.phone"
-                                type="tel"
+                            <i class="ri-mail-line absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                            <input v-model="loginForm.email" type="email"
                                 class="input-field w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none"
-                                placeholder="请输入手机号"
-                                required
-                            >
+                                placeholder="请输入邮箱地址" required>
                         </div>
                     </div>
 
@@ -93,18 +97,11 @@
                         <label class="block text-sm font-medium text-gray-700 mb-2">密码 *</label>
                         <div class="relative">
                             <i class="ri-lock-line absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                            <input
-                                v-model="loginForm.password"
-                                :type="showPassword ? 'text' : 'password'"
+                            <input v-model="loginForm.password" :type="showPassword ? 'text' : 'password'"
                                 class="input-field w-full pl-12 pr-12 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none"
-                                placeholder="请输入密码"
-                                required
-                            >
-                            <button
-                                type="button"
-                                @click="showPassword = !showPassword"
-                                class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
-                            >
+                                placeholder="请输入密码" required>
+                            <button type="button" @click="showPassword = !showPassword"
+                                class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition">
                                 <i :class="showPassword ? 'ri-eye-off-line' : 'ri-eye-line'"></i>
                             </button>
                         </div>
@@ -113,11 +110,8 @@
                     <!-- 记住我 -->
                     <div class="flex items-center justify-between">
                         <label class="flex items-center cursor-pointer">
-                            <input
-                                v-model="loginForm.remember"
-                                type="checkbox"
-                                class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                            >
+                            <input v-model="loginForm.remember" type="checkbox"
+                                class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
                             <span class="ml-2 text-sm text-gray-600">记住我</span>
                         </label>
                         <a href="#" class="text-sm text-indigo-600 hover:text-indigo-700">忘记密码？</a>
@@ -129,11 +123,8 @@
                     </div>
 
                     <!-- 登录按钮 -->
-                    <button
-                        type="submit"
-                        :disabled="isLogging"
-                        class="btn-primary w-full py-3 rounded-xl text-white font-semibold text-lg disabled:opacity-60 disabled:cursor-not-allowed"
-                    >
+                    <button type="submit" :disabled="isLogging"
+                        class="btn-primary w-full py-3 rounded-xl text-white font-semibold text-lg disabled:opacity-60 disabled:cursor-not-allowed">
                         {{ isLogging ? '登录中...' : '登录' }}
                     </button>
                 </form>
@@ -163,7 +154,7 @@
                 return {
                     loginForm: {
                         shopCode: '',
-                        phone: '',
+                        email: '',
                         password: '',
                         remember: false
                     },
@@ -187,19 +178,19 @@
                                 'Authorization': `Bearer ${token}`
                             }
                         })
-                        .then(response => {
-                            if (response.ok) {
-                                this.redirectToHome()
-                            } else {
-                                // Token无效，清除
-                                localStorage.removeItem('access_token')
-                                localStorage.removeItem('refresh_token')
-                                localStorage.removeItem('user_info')
-                            }
-                        })
-                        .catch(() => {
-                            // 静默失败，继续显示登录页面
-                        })
+                            .then(response => {
+                                if (response.ok) {
+                                    this.redirectToHome()
+                                } else {
+                                    // Token无效，清除
+                                    localStorage.removeItem('access_token')
+                                    localStorage.removeItem('refresh_token')
+                                    localStorage.removeItem('user_info')
+                                }
+                            })
+                            .catch(() => {
+                                // 静默失败，继续显示登录页面
+                            })
                     }
                 },
                 async handleLogin() {
@@ -214,7 +205,7 @@
                             },
                             body: JSON.stringify({
                                 shop_code: this.loginForm.shopCode || undefined,
-                                phone: this.loginForm.phone,
+                                email: this.loginForm.email,
                                 password: this.loginForm.password
                             })
                         })
@@ -225,9 +216,12 @@
                             // 保存token和用户信息
                             localStorage.setItem('access_token', data.access_token)
                             localStorage.setItem('refresh_token', data.refresh_token)
-                            localStorage.setItem('user_info', JSON.stringify({
-                                shop: data.shop,
-                                user: data.user
+                            localStorage.setItem('shop_code', data.shop.shop_code)
+                            localStorage.setItem('shop_info', JSON.stringify({
+                                shop_name: data.shop.shop_name,
+                                shop_code: data.shop.shop_code,
+                                username: data.user.real_name || data.user.username,
+                                email: data.user.email
                             }))
 
                             this.redirectToHome()
@@ -252,4 +246,5 @@
         }).mount('#app')
     </script>
 </body>
+
 </html>

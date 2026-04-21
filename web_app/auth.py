@@ -125,17 +125,84 @@ class VerifyCodeService:
         return ''.join([str(random.randint(0, 9)) for _ in range(length)])
 
     @staticmethod
-    def is_valid_phone(phone: str) -> bool:
-        """验证手机号格式（中国大陆）"""
+    def is_valid_email(email: str) -> bool:
+        """验证邮箱格式"""
         import re
-        pattern = r'^1[3-9]\d{9}$'
-        return bool(re.match(pattern, phone))
+        pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        return bool(re.match(pattern, email))
+
+
+class SMTPService:
+    """邮件发送服务"""
+
+    def __init__(self):
+        self.host = os.getenv("SMTP_HOST", "")
+        self.port = int(os.getenv("SMTP_PORT", "465"))
+        self.user = os.getenv("SMTP_USER", "")
+        self.password = os.getenv("SMTP_PASSWORD", "")
+        self.from_name = os.getenv("SMTP_FROM_NAME", "TimerPro")
+
+    def send_verify_code(self, to_email: str, code: str, code_type: str = "register") -> bool:
+        """发送验证码邮件"""
+        import smtplib
+        from email.mime.text import MIMEText
+        from email.mime.multipart import MIMEMultipart
+
+        if not self.host or not self.user or not self.password:
+            # SMTP 未配置，回退到控制台输出
+            print(f"[SMTP未配置 - 验证码] {to_email}: {code} (类型: {code_type})")
+            return True
+
+        type_names = {
+            "register": "注册",
+            "login": "登录",
+            "reset_password": "重置密码"
+        }
+        type_text = type_names.get(code_type, "操作")
+
+        subject = f"TimerPro {type_text}验证码: {code}"
+        html_body = f"""
+        <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px; border: 1px solid #e5e7eb; border-radius: 16px;">
+            <div style="text-align: center; margin-bottom: 24px;">
+                <h1 style="color: #4f46e5; margin: 0; font-size: 24px;">TimerPro</h1>
+                <p style="color: #6b7280; margin: 4px 0 0; font-size: 14px;">智能计时收银系统</p>
+            </div>
+            <div style="background: #f8fafc; border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 20px;">
+                <p style="color: #374151; font-size: 14px; margin: 0 0 12px;">您的{type_text}验证码是：</p>
+                <div style="font-size: 36px; font-weight: bold; color: #4f46e5; letter-spacing: 8px; font-family: monospace;">{code}</div>
+            </div>
+            <p style="color: #9ca3af; font-size: 12px; text-align: center; margin: 0;">验证码 5 分钟内有效，请勿泄露给他人。</p>
+        </div>
+        """
+
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"] = f"{self.from_name} <{self.user}>"
+        msg["To"] = to_email
+        msg.attach(MIMEText(html_body, "html", "utf-8"))
+
+        try:
+            if self.port == 465:
+                with smtplib.SMTP_SSL(self.host, self.port, timeout=10) as server:
+                    server.login(self.user, self.password)
+                    server.sendmail(self.user, to_email, msg.as_string())
+            else:
+                with smtplib.SMTP(self.host, self.port, timeout=10) as server:
+                    server.starttls()
+                    server.login(self.user, self.password)
+                    server.sendmail(self.user, to_email, msg.as_string())
+            print(f"[邮件已发送] {to_email} ({code_type})")
+            return True
+        except Exception as e:
+            print(f"[邮件发送失败] {to_email}: {e}")
+            return False
 
 
 # 单例实例
 jwt_service = JWTService()
 password_service = PasswordService()
 verify_code_service = VerifyCodeService()
+smtp_service = SMTPService()
 
 
 # =====================================================
@@ -160,7 +227,7 @@ class TokenData(BaseModel):
 class RegisterRequest(BaseModel):
     shop_name: str
     shop_code: Optional[str] = None
-    contact_phone: str
+    email: str              # 注册邮箱
     admin_name: str
     password: str
     password_confirm: str
@@ -169,12 +236,12 @@ class RegisterRequest(BaseModel):
     description: Optional[str] = None
 
 class LoginRequest(BaseModel):
-    shop_code: Optional[str] = None  # 兼容多商家登录
-    phone: str
+    shop_code: Optional[str] = None
+    email: str              # 登录邮箱
     password: str
 
 class SendVerifyCodeRequest(BaseModel):
-    phone: str
+    email: str
     code_type: str = "register"  # register/login/reset_password
 
 class CheckShopCodeRequest(BaseModel):

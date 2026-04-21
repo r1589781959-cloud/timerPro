@@ -12,7 +12,7 @@ from ..database import get_db, Shop, User, SystemConfig, GroupBuy, VerifyCode
 from ..auth import (
     RegisterRequest, LoginRequest, SendVerifyCodeRequest,
     CheckShopCodeRequest, Token, jwt_service, password_service,
-    verify_code_service, get_current_user, get_current_shop, require_admin
+    verify_code_service, smtp_service, get_current_user, get_current_shop, require_admin
 )
 from typing import Optional
 import random
@@ -29,18 +29,18 @@ async def send_verify_code(
     request: SendVerifyCodeRequest,
     db: Session = Depends(get_db)
 ):
-    """发送验证码"""
-    # 验证手机号格式
-    if not verify_code_service.is_valid_phone(request.phone):
+    """发送邮箱验证码"""
+    # 验证邮箱格式
+    if not verify_code_service.is_valid_email(request.email):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="手机号格式不正确"
+            detail="邮箱格式不正确"
         )
 
     # 检查是否频繁发送（60秒内只能发送一次）
     now = datetime.now()
     recent_code = db.query(VerifyCode).filter(
-        VerifyCode.phone == request.phone,
+        VerifyCode.email == request.email,
         VerifyCode.code_type == request.code_type,
         VerifyCode.is_used == False,
         VerifyCode.expire_at > now
@@ -54,11 +54,11 @@ async def send_verify_code(
 
     # 生成验证码
     code = verify_code_service.generate_code(6)
-    expire_at = now + timedelta(minutes=5)  # 5分钟有效期
+    expire_at = now + timedelta(minutes=5)
 
     # 保存验证码到数据库
     new_code = VerifyCode(
-        phone=request.phone,
+        email=request.email,
         code=code,
         code_type=request.code_type,
         expire_at=expire_at
@@ -66,12 +66,17 @@ async def send_verify_code(
     db.add(new_code)
     db.commit()
 
-    # TODO: 发送短信验证码（这里先输出到控制台）
-    print(f"[验证码] {request.phone}: {code} (类型: {request.code_type})")
+    # 通过 SMTP 发送邮件
+    sent = smtp_service.send_verify_code(request.email, code, request.code_type)
+    if not sent:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="验证码邮件发送失败，请稍后重试"
+        )
 
     return {
         "success": True,
-        "message": "验证码已发送",
+        "message": "验证码已发送至您的邮箱",
         "expire_seconds": 300
     }
 
@@ -121,25 +126,25 @@ async def register_merchant(
             detail="密码长度必须在6-20位之间"
         )
 
-    # 3. 验证手机号格式
-    if not verify_code_service.is_valid_phone(request.contact_phone):
+    # 3. 验证邮箱格式
+    if not verify_code_service.is_valid_email(request.email):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="手机号格式不正确"
+            detail="邮箱格式不正确"
         )
 
-    # 4. 检查手机号是否已注册
-    existing_user = db.query(User).filter(User.phone == request.contact_phone).first()
+    # 4. 检查邮箱是否已注册
+    existing_user = db.query(User).filter(User.email == request.email).first()
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="该手机号已注册"
+            detail="该邮箱已注册"
         )
 
-    # 5. 验证验证码
+    # 5. 验证邮箱验证码
     now = datetime.now()
     verify_code_record = db.query(VerifyCode).filter(
-        VerifyCode.phone == request.contact_phone,
+        VerifyCode.email == request.email,
         VerifyCode.code == request.verify_code,
         VerifyCode.code_type == "register",
         VerifyCode.is_used == False,
@@ -172,7 +177,7 @@ async def register_merchant(
         new_shop = Shop(
             name=request.shop_name,
             shop_code=request.shop_code,
-            phone=request.contact_phone,
+            email=request.email,
             address=request.address,
             status=1
         )
@@ -182,11 +187,11 @@ async def register_merchant(
         # 8. 创建管理员用户
         new_user = User(
             shop_id=new_shop.shop_id,
-            username=request.contact_phone,
+            username=request.email,
+            email=request.email,
             password_hash=password_service.hash_password(request.password),
             role="admin",
-            real_name=request.admin_name,
-            phone=request.contact_phone
+            real_name=request.admin_name
         )
         db.add(new_user)
         db.flush()
@@ -268,7 +273,7 @@ async def register_merchant(
 
         # 11. 生成JWT Token
         token_data = {
-            "sub": request.contact_phone,
+            "sub": request.email,
             "shop_id": new_shop.shop_id,
             "user_id": new_user.user_id,
             "role": new_user.role
@@ -284,7 +289,7 @@ async def register_merchant(
                 "shop_id": new_shop.shop_id,
                 "shop_code": new_shop.shop_code,
                 "shop_name": new_shop.name,
-                "phone": new_shop.phone,
+                "email": new_shop.email,
                 "address": new_shop.address
             },
             user={
@@ -292,7 +297,7 @@ async def register_merchant(
                 "username": new_user.username,
                 "role": new_user.role,
                 "real_name": new_user.real_name,
-                "phone": new_user.phone
+                "email": new_user.email
             }
         )
 
@@ -315,25 +320,25 @@ async def login(
 ):
     """商家登录"""
 
-    # 1. 查找用户
+    # 1. 查找用户（通过邮箱）
     user = db.query(User).filter(
         or_(
-            User.username == request.phone,
-            User.phone == request.phone
+            User.email == request.email,
+            User.username == request.email
         )
     ).first()
 
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="手机号或密码错误"
+            detail="邮箱或密码错误"
         )
 
     # 2. 验证密码
     if not password_service.verify_password(request.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="手机号或密码错误"
+            detail="邮箱或密码错误"
         )
 
     # 3. 检查商家状态
@@ -366,7 +371,7 @@ async def login(
             "shop_id": shop.shop_id,
             "shop_code": shop.shop_code,
             "shop_name": shop.name,
-            "phone": shop.phone,
+            "email": shop.email,
             "address": shop.address
         },
         user={
@@ -374,7 +379,7 @@ async def login(
             "username": user.username,
             "role": user.role,
             "real_name": user.real_name,
-            "phone": user.phone
+            "email": user.email
         }
     )
 
@@ -407,6 +412,7 @@ async def get_merchant_info(
         "shop_id": current_shop.shop_id,
         "shop_code": current_shop.shop_code,
         "shop_name": current_shop.name,
+        "email": current_shop.email,
         "phone": current_shop.phone,
         "address": current_shop.address,
         "logo_url": current_shop.logo_url,

@@ -36,7 +36,8 @@ class Shop(Base):
     shop_id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(100), nullable=False)
     shop_code = Column(String(50), unique=True, nullable=False, index=True)
-    phone = Column(String(20), unique=True, index=True)
+    email = Column(String(100), unique=True, index=True)  # 主要联系邮箱
+    phone = Column(String(20), index=True)  # 可选手机号
     address = Column(String(255))
     logo_url = Column(String(255))
     status = Column(Integer, default=1)  # 1:启用 0:禁用
@@ -58,10 +59,11 @@ class User(Base):
     user_id = Column(Integer, primary_key=True, autoincrement=True)
     shop_id = Column(Integer, ForeignKey("shops.shop_id"), nullable=False)
     username = Column(String(50), nullable=False)
+    email = Column(String(100), index=True)  # 登录邮箱
     password_hash = Column(String(255), nullable=False)
     role = Column(String(20), default="admin")  # admin/employee/staff
     real_name = Column(String(50))
-    phone = Column(String(20))
+    phone = Column(String(20))  # 可选手机号
     avatar_url = Column(String(255))
     last_login_at = Column(DateTime)
     created_at = Column(DateTime, default=datetime.now)
@@ -240,7 +242,7 @@ class VerifyCode(Base):
     __tablename__ = "verify_codes"
 
     code_id = Column(Integer, primary_key=True, autoincrement=True)
-    phone = Column(String(20), nullable=False, index=True)
+    email = Column(String(100), nullable=False, index=True)  # 接收验证码的邮箱
     code = Column(String(10), nullable=False)
     code_type = Column(String(20), nullable=False)  # register/login/reset_password
     expire_at = Column(DateTime, nullable=False, index=True)

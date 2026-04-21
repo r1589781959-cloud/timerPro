@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,29 +10,71 @@
     <style>
         /* 模态框遮罩 */
         .modal-overlay {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.5);
-            display: flex; align-items: center; justify-content: center; z-index: 100;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
         }
+
         .modal-box {
-            background: white; border-radius: 12px; padding: 24px;
-            width: 90%; max-width: 420px; max-height: 85vh; overflow-y: auto;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            width: 90%;
+            max-width: 420px;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
         }
+
         /* 挂账状态紫色边框 */
-        .suspended-card { border-left: 4px solid #8b5cf6 !important; background: #f5f3ff !important; }
+        .suspended-card {
+            border-left: 4px solid #8b5cf6 !important;
+            background: #f5f3ff !important;
+        }
+
         /* 按钮悬停效果 */
-        .btn-action { transition: all 0.15s; }
-        .btn-action:active { transform: scale(0.95); }
+        .btn-action {
+            transition: all 0.15s;
+        }
+
+        .btn-action:active {
+            transform: scale(0.95);
+        }
+
         /* 超时预警脉冲动画 */
         @keyframes pulse-alert {
-            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
-            50% { transform: scale(1.02); box-shadow: 0 0 30px 10px rgba(239, 68, 68, 0.2); }
+
+            0%,
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+            }
+
+            50% {
+                transform: scale(1.02);
+                box-shadow: 0 0 30px 10px rgba(239, 68, 68, 0.2);
+            }
         }
+
         /* 超时卡片闪烁 */
         @keyframes blink-red {
-            0%, 100% { border-color: #ef4444; box-shadow: 0 0 8px rgba(239, 68, 68, 0.3); }
-            50% { border-color: #fca5a5; box-shadow: 0 0 2px rgba(239, 68, 68, 0.1); }
+
+            0%,
+            100% {
+                border-color: #ef4444;
+                box-shadow: 0 0 8px rgba(239, 68, 68, 0.3);
+            }
+
+            50% {
+                border-color: #fca5a5;
+                box-shadow: 0 0 2px rgba(239, 68, 68, 0.1);
+            }
         }
+
         .overtime-card {
             animation: blink-red 1.5s ease-in-out infinite !important;
             border-width: 2px !important;
@@ -58,43 +101,69 @@
         };
     </script>
 </head>
+
 <body>
     <div id="app" class="min-h-screen bg-gray-100">
         <!-- Header -->
         <header class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg sticky top-0 z-50">
             <div class="container mx-auto px-4 flex justify-between items-center h-14">
                 <div class="flex items-center gap-6">
-                    <h1 class="text-xl font-bold">TimerPro <span class="text-sm font-normal opacity-70">| {{ shopInfo.shop_name }}</span></h1>
+                    <h1 class="text-xl font-bold">TimerPro <span class="text-sm font-normal opacity-70">| {{
+                            shopInfo.shop_name }}</span></h1>
                     <nav class="hidden md:flex gap-1">
-                        <button @click="currentTab = 'pos'" :class="currentTab === 'pos' ? 'bg-indigo-800' : 'hover:bg-white/10'" class="px-4 py-1.5 rounded-lg font-medium transition text-sm">🏪 收银台</button>
-                        <button @click="currentTab = 'history'" :class="currentTab === 'history' ? 'bg-indigo-800' : 'hover:bg-white/10'" class="px-4 py-1.5 rounded-lg font-medium transition text-sm">📊 报表与历史</button>
-                        <button @click="currentTab = 'settings'" :class="currentTab === 'settings' ? 'bg-indigo-800' : 'hover:bg-white/10'" class="px-4 py-1.5 rounded-lg font-medium transition text-sm">⚙️ 系统设置</button>
+                        <button @click="currentTab = 'pos'"
+                            :class="currentTab === 'pos' ? 'bg-indigo-800' : 'hover:bg-white/10'"
+                            class="px-4 py-1.5 rounded-lg font-medium transition text-sm">🏪 收银台</button>
+                        <button @click="currentTab = 'history'"
+                            :class="currentTab === 'history' ? 'bg-indigo-800' : 'hover:bg-white/10'"
+                            class="px-4 py-1.5 rounded-lg font-medium transition text-sm">📊 报表与历史</button>
+                        <button @click="currentTab = 'settings'"
+                            :class="currentTab === 'settings' ? 'bg-indigo-800' : 'hover:bg-white/10'"
+                            class="px-4 py-1.5 rounded-lg font-medium transition text-sm">⚙️ 系统设置</button>
                     </nav>
                 </div>
                 <!-- 右侧：用户信息与退出 -->
                 <div class="flex items-center gap-4">
                     <div class="hidden sm:flex flex-col items-end border-r border-white/20 pr-4 mr-2">
-                        <span class="text-[10px] text-indigo-100/80 tracking-wider uppercase font-medium">SaaS | {{ shopInfo.username || '管理员' }}</span>
+                        <span class="text-[10px] text-indigo-100/80 tracking-wider uppercase font-medium">SaaS | {{
+                            shopInfo.username || '管理员' }}</span>
                         <span class="text-sm font-bold tracking-tight">{{ shopInfo.shop_name }}</span>
                     </div>
-                    
+
                     <div class="flex items-center gap-2">
                         <!-- 刷新按钮 -->
-                        <button @click="refreshData" class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors active:scale-95" title="手动刷新">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                        <button @click="refreshData"
+                            class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors active:scale-95"
+                            title="手动刷新">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                                </path>
+                            </svg>
                         </button>
                         <!-- 登出按钮 -->
-                        <button @click="logout" class="w-9 h-9 flex items-center justify-center rounded-full bg-red-500/10 hover:bg-red-500/80 transition-all active:scale-90 text-red-200 hover:text-white" title="退出系统">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                        <button @click="logout"
+                            class="w-9 h-9 flex items-center justify-center rounded-full bg-red-500/10 hover:bg-red-500/80 transition-all active:scale-90 text-red-200 hover:text-white"
+                            title="退出系统">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1">
+                                </path>
+                            </svg>
                         </button>
                     </div>
                 </div>
             </div>
             <!-- Mobile nav -->
             <div class="md:hidden flex bg-indigo-800 text-sm">
-                 <button @click="currentTab = 'pos'" :class="currentTab === 'pos' ? 'border-b-2 border-white' : ''" class="flex-1 py-2.5 font-medium">🏪 收银</button>
-                 <button @click="currentTab = 'history'" :class="currentTab === 'history' ? 'border-b-2 border-white' : ''" class="flex-1 py-2.5 font-medium">📊 报表</button>
-                 <button @click="currentTab = 'settings'" :class="currentTab === 'settings' ? 'border-b-2 border-white' : ''" class="flex-1 py-2.5 font-medium">⚙️ 设置</button>
+                <button @click="currentTab = 'pos'" :class="currentTab === 'pos' ? 'border-b-2 border-white' : ''"
+                    class="flex-1 py-2.5 font-medium">🏪 收银</button>
+                <button @click="currentTab = 'history'"
+                    :class="currentTab === 'history' ? 'border-b-2 border-white' : ''"
+                    class="flex-1 py-2.5 font-medium">📊 报表</button>
+                <button @click="currentTab = 'settings'"
+                    :class="currentTab === 'settings' ? 'border-b-2 border-white' : ''"
+                    class="flex-1 py-2.5 font-medium">⚙️ 设置</button>
             </div>
         </header>
 
@@ -145,8 +214,7 @@
                     <!-- 团购选择 -->
                     <div v-if="newOrder.mode === 'group_buy'" class="mb-3">
                         <label class="block text-sm font-medium text-gray-700 mb-1">选择团购</label>
-                        <select v-model="newOrder.configId"
-                            class="w-full px-3 py-2 border rounded-lg">
+                        <select v-model="newOrder.configId" class="w-full px-3 py-2 border rounded-lg">
                             <option v-for="gb in groupBuys" :key="gb.name" :value="gb">
                                 {{ gb.name }} - ¥{{ gb.price }} ({{ gb.persons }}人)
                             </option>
@@ -156,8 +224,7 @@
                     <!-- 时段优惠选择 -->
                     <div v-if="newOrder.mode === 'time_slot'" class="mb-3">
                         <label class="block text-sm font-medium text-gray-700 mb-1">时段优惠</label>
-                        <select v-model="newOrder.configId"
-                            class="w-full px-3 py-2 border rounded-lg">
+                        <select v-model="newOrder.configId" class="w-full px-3 py-2 border rounded-lg">
                             <option v-for="ts in timeSlots" :key="ts.name" :value="ts">
                                 {{ ts.name }} - ¥{{ ts.price }} ({{ ts.start_time }}-{{ ts.end_time }})
                             </option>
@@ -165,10 +232,12 @@
                     </div>
 
                     <!-- 不限时价格展示 -->
-                    <div v-if="newOrder.mode === 'unlimited'" class="mb-3 text-2xl font-bold text-indigo-600 py-2 px-4 bg-indigo-50 rounded-lg text-center">
+                    <div v-if="newOrder.mode === 'unlimited'"
+                        class="mb-3 text-2xl font-bold text-indigo-600 py-2 px-4 bg-indigo-50 rounded-lg text-center">
                         ¥{{ shopConfig?.price_unlimited || 59.9 }}
                     </div>
-                    <div v-if="newOrder.mode === 'single_board'" class="mb-3 text-2xl font-bold text-indigo-600 py-2 px-4 bg-indigo-50 rounded-lg text-center">
+                    <div v-if="newOrder.mode === 'single_board'"
+                        class="mb-3 text-2xl font-bold text-indigo-600 py-2 px-4 bg-indigo-50 rounded-lg text-center">
                         ¥{{ shopConfig?.price_single_board || 39.9 }}
                     </div>
 
@@ -182,12 +251,15 @@
                 <section class="lg:col-span-2 bg-white rounded-xl shadow-md p-6">
                     <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
                         <h2 class="text-lg font-semibold text-gray-800">
-                            📋 当前上机 ({{ activeOrders.length }})
+                            📋 正在制作 ({{ activeOrders.length }})
                         </h2>
                         <button @click="fetchActiveData" :disabled="ordersLoading"
                             class="text-indigo-600 hover:text-indigo-800 disabled:opacity-50 transition p-1" title="刷新">
-                            <svg class="w-5 h-5" :class="{ 'animate-spin': ordersLoading }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            <svg class="w-5 h-5" :class="{ 'animate-spin': ordersLoading }" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                                </path>
                             </svg>
                         </button>
                     </div>
@@ -201,17 +273,18 @@
                                 {{ f.label }}
                             </button>
                         </div>
-                        
+
                         <!-- 第二行：排序和搜索（移动端自动换行） -->
                         <div class="flex flex-wrap sm:flex-nowrap gap-2 w-full">
-                            <select v-model="orderSortMode" class="border rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-indigo-400 focus:outline-none bg-white w-full sm:w-auto min-w-[110px]">
+                            <select v-model="orderSortMode"
+                                class="border rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-indigo-400 focus:outline-none bg-white w-full sm:w-auto min-w-[110px]">
                                 <option value="id_desc">最新开台 ↓</option>
                                 <option value="id_asc">最早开台 ↑</option>
                                 <option value="phone_asc">按台号 A-Z</option>
                                 <option value="progress_desc">进度/超时 ↓</option>
                             </select>
                             <div class="relative flex-1 min-w-0 w-full">
-                                <input type="text" v-model="orderSearchQuery" placeholder="🔍 搜索标识/备注..." 
+                                <input type="text" v-model="orderSearchQuery" placeholder="🔍 搜索标识/备注..."
                                     class="border rounded-lg px-3 py-1.5 text-sm w-full focus:ring-2 focus:ring-indigo-400 focus:outline-none">
                             </div>
                         </div>
@@ -219,7 +292,9 @@
 
                     <!-- Loading -->
                     <div v-if="ordersLoading && activeOrders.length === 0" class="text-center py-12 text-gray-500">
-                        <div class="animate-spin w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full mx-auto mb-3"></div>
+                        <div
+                            class="animate-spin w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full mx-auto mb-3">
+                        </div>
                         加载中...
                     </div>
                     <div v-else-if="ordersError" class="text-center py-10 text-red-500 bg-red-50 rounded-lg">
@@ -227,7 +302,7 @@
                     </div>
                     <div v-else-if="activeOrders.length === 0" class="text-center py-16 text-gray-400">
                         <div class="text-5xl mb-4">📭</div>
-                        <p class="text-lg">暂无上机订单</p>
+                        <p class="text-lg">暂无制作订单</p>
                     </div>
                     <div v-else-if="filteredOrders.length === 0" class="text-center py-10 text-gray-400">
                         <p>🔍 没有匹配的订单</p>
@@ -235,13 +310,20 @@
 
                     <!-- Orders Grid -->
                     <div v-show="filteredOrders.length > 0" class="grid grid-cols-1 md:grid-cols-2 gap-4 relative">
-                        <div v-if="ordersLoading && activeOrders.length > 0" class="absolute -top-6 right-0 text-xs text-gray-400 flex items-center">
-                            <svg class="animate-spin h-3 w-3 mr-1 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        <div v-if="ordersLoading && activeOrders.length > 0"
+                            class="absolute -top-6 right-0 text-xs text-gray-400 flex items-center">
+                            <svg class="animate-spin h-3 w-3 mr-1 text-indigo-500" xmlns="http://www.w3.org/2000/svg"
+                                fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                    stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                </path>
+                            </svg>
                             同步中...
                         </div>
                         <div v-for="order in filteredOrders" :key="order.id"
-                            class="border rounded-lg p-4 hover:shadow-md transition-all duration-200"
-                            :class="{
+                            class="border rounded-lg p-4 hover:shadow-md transition-all duration-200" :class="{
                                 'bg-yellow-50 border-yellow-300': order.isPaused && !isOrderOvertime(order),
                                 'suspended-card border-purple-300': order.isSuspended,
                                 'overtime-card': isOrderOvertime(order) && !order.isPaused && !order.isSuspended,
@@ -251,14 +333,17 @@
                             <div class="flex justify-between items-start mb-2">
                                 <h3 class="font-bold text-lg text-gray-800 flex items-center gap-2">
                                     {{ order.phone }}
-                                    <span v-if="order.groupId" :class="getGroupClass(order.groupId)" class="px-1.5 py-0.5 text-[10px] rounded shadow-sm" title="连坐团队订单">👥 连坐</span>
+                                    <span v-if="order.groupId" :class="getGroupClass(order.groupId)"
+                                        class="px-1.5 py-0.5 text-[10px] rounded shadow-sm" title="连坐团队订单">👥 连坐</span>
                                 </h3>
                                 <div class="flex items-center gap-1.5">
-                                    <span :class="order.statusClass" class="px-2 py-0.5 rounded-full text-xs font-medium">
+                                    <span :class="order.statusClass"
+                                        class="px-2 py-0.5 rounded-full text-xs font-medium">
                                         {{ order.statusText }}
                                     </span>
-                                    <button @click.stop="forceCancelOrder(order.id, order.phone)" 
-                                        class="text-gray-300 hover:text-red-500 transition px-1" title="强制移除(取消开台且不记日志)">✖</button>
+                                    <button @click.stop="forceCancelOrder(order.id, order.phone)"
+                                        class="text-gray-300 hover:text-red-500 transition px-1"
+                                        title="强制移除(取消开台且不记日志)">✖</button>
                                 </div>
                             </div>
 
@@ -267,16 +352,19 @@
                                 <p>🏷️ 模式: <strong>{{ order.modeText }}</strong></p>
                                 <p>🕐 开始: {{ order.startTime }}</p>
                                 <p>⏱️ 已用: <strong>{{ order.elapsedTime }}</strong></p>
-                                <p>💰 应付: <strong class="text-orange-600 text-base">¥{{ order.estimatedCost }}</strong></p>
+                                <p>💰 应付: <strong class="text-orange-600 text-base">¥{{ order.estimatedCost }}</strong>
+                                </p>
                             </div>
 
                             <!-- 倒计时进度条（定额/限时团购） -->
                             <div v-if="getOrderCountdown(order)" class="mt-2">
                                 <div class="flex justify-between items-center text-xs mb-1">
-                                    <span class="font-medium" :class="getOrderCountdown(order).percent >= 100 ? 'text-red-600' : 'text-indigo-600'">
+                                    <span class="font-medium"
+                                        :class="getOrderCountdown(order).percent >= 100 ? 'text-red-600' : 'text-indigo-600'">
                                         {{ getOrderCountdown(order).percent >= 100 ? '⚠️ 已超时' : '⏳ 剩余' }}
                                     </span>
-                                    <span class="font-bold" :class="getOrderCountdown(order).percent >= 100 ? 'text-red-600' : getOrderCountdown(order).percent >= 80 ? 'text-orange-500' : 'text-indigo-700'">
+                                    <span class="font-bold"
+                                        :class="getOrderCountdown(order).percent >= 100 ? 'text-red-600' : getOrderCountdown(order).percent >= 80 ? 'text-orange-500' : 'text-indigo-700'">
                                         {{ getOrderCountdown(order).remainText }}
                                     </span>
                                 </div>
@@ -289,9 +377,11 @@
                             </div>
 
                             <!-- 团购标签 -->
-                            <div v-if="order.gbConfig || (order.added_gb && order.added_gb.length > 0)" class="mt-2 flex flex-col gap-2">
+                            <div v-if="order.gbConfig || (order.added_gb && order.added_gb.length > 0)"
+                                class="mt-2 flex flex-col gap-2">
                                 <div v-if="order.gbConfig" class="flex items-center gap-2 flex-wrap">
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
+                                    <span
+                                        class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
                                         🎫 {{ order.gbConfig.name }}
                                     </span>
                                     <button @click="toggleVerify(order.id, !order.gbVerified, null)"
@@ -300,8 +390,10 @@
                                         {{ order.gbVerified ? '✓ 已核销' : '✗ 未核销' }}
                                     </button>
                                 </div>
-                                <div v-for="(gb, idx) in order.added_gb" :key="idx" class="flex items-center gap-2 flex-wrap">
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-800">
+                                <div v-for="(gb, idx) in order.added_gb" :key="idx"
+                                    class="flex items-center gap-2 flex-wrap">
+                                    <span
+                                        class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-800">
                                         ➕ {{ gb.name }}
                                     </span>
                                     <button @click="toggleVerify(order.id, !gb.verify_status, idx)"
@@ -320,7 +412,8 @@
                             </div>
 
                             <!-- 挂账锁定价格 -->
-                            <div v-if="order.isSuspended" class="mt-2 text-sm font-bold text-purple-700 bg-purple-50 px-2 py-1 rounded">
+                            <div v-if="order.isSuspended"
+                                class="mt-2 text-sm font-bold text-purple-700 bg-purple-50 px-2 py-1 rounded">
                                 🔒 挂账冻结: ¥{{ order.suspendLockedCost }}
                             </div>
 
@@ -378,58 +471,105 @@
         <div v-if="checkoutModal.show" class="modal-overlay" @click.self="checkoutModal.show = false">
             <div class="modal-box" style="max-width: 480px;">
                 <div v-if="checkoutModal.loading" class="text-center py-10">
-                    <div class="animate-spin w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full mx-auto mb-2"></div>
+                    <div
+                        class="animate-spin w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full mx-auto mb-2">
+                    </div>
                     <p class="text-gray-500">正在获取账单...</p>
                 </div>
                 <template v-else-if="checkoutModal.bill">
                     <h3 class="text-xl font-bold mb-1 text-gray-800">结账 / 挂账详情</h3>
                     <p class="text-sm text-gray-500 mb-4 border-b pb-2">
-                        顾客: <span class="font-bold text-gray-800">{{ checkoutModal.order.phone }}</span> [👥人数: {{ checkoutModal.order.guestCount }}]
+                        顾客: <span class="font-bold text-gray-800">{{ checkoutModal.order.phone }}</span> [👥人数: {{
+                        checkoutModal.order.guestCount }}]
                     </p>
 
                     <div class="space-y-2 mb-4 text-sm text-gray-700 bg-gray-50 p-3 rounded-lg border border-gray-100">
-                        <div class="flex justify-between"><span class="font-medium">计费模式:</span> <span>{{ checkoutModal.bill.mode_text }}</span></div>
-                        <div v-if="checkoutModal.bill.fixed_str !== '--'" class="flex justify-between"><span class="font-medium">定额时长:</span> <span>{{ checkoutModal.bill.fixed_str }}</span></div>
-                        <div class="flex justify-between"><span class="font-medium">总时长:</span> <span>{{ checkoutModal.bill.total_dur_str }}</span></div>
+                        <div class="flex justify-between"><span class="font-medium">计费模式:</span> <span>{{
+                                checkoutModal.bill.mode_text }}</span></div>
+                        <div v-if="checkoutModal.bill.limit_min && checkoutModal.order.mode !== 'pay_later'"
+                            class="flex justify-between"><span class="font-medium">开台定额时长:</span> <span>{{
+                                checkoutModal.bill.limit_min }}分</span></div>
+                        <div v-if="checkoutModal.bill.direct_added_time_min > 0 && checkoutModal.order.mode !== 'pay_later'"
+                            class="flex justify-between"><span class="font-medium">直接加时:</span> <span
+                                class="text-blue-600">+{{ checkoutModal.bill.direct_added_time_min }}分</span></div>
+                        <div v-if="checkoutModal.bill.gb_added_time_min > 0 && checkoutModal.order.mode !== 'pay_later'"
+                            class="flex justify-between"><span class="font-medium">团购加时:</span> <span
+                                class="text-purple-600">+{{ checkoutModal.bill.gb_added_time_min }}分</span></div>
+                        <div v-if="checkoutModal.bill.total_limit_min && checkoutModal.bill.added_time_min > 0 && checkoutModal.order.mode !== 'pay_later'"
+                            class="flex justify-between"><span class="font-medium">总定额时长:</span> <span
+                                class="font-bold text-indigo-600">{{ checkoutModal.bill.total_limit_min }}分</span></div>
+                        <div class="flex justify-between"><span class="font-medium">总时长:</span> <span>{{
+                                checkoutModal.bill.total_dur_str }}</span></div>
                         <div class="flex justify-between">
-                            <span class="font-medium">暂停时长:</span> 
-                            <span :class="checkoutModal.bill.pause_str !== '无' ? 'text-orange-500' : ''">{{ checkoutModal.bill.pause_dur_str || checkoutModal.bill.pause_str }}</span>
+                            <span class="font-medium">暂停时长:</span>
+                            <span :class="checkoutModal.bill.pause_str !== '无' ? 'text-orange-500' : ''">{{
+                                checkoutModal.bill.pause_dur_str || checkoutModal.bill.pause_str }}</span>
                         </div>
-                        <div class="flex justify-between"><span class="font-medium">计费时长:</span> <span class="text-green-600 font-bold">{{ checkoutModal.bill.play_dur_str }}</span></div>
+                        <div class="flex justify-between"><span class="font-medium">计费时长:</span> <span
+                                class="text-green-600 font-bold">{{ checkoutModal.bill.play_dur_str }}</span></div>
                         <div class="flex justify-between">
-                            <span class="font-medium">状态:</span> 
-                            <span :class="checkoutModal.bill.over_info.includes('超时') ? 'text-red-500' : 'text-green-600'">{{ checkoutModal.bill.over_info }}</span>
+                            <span class="font-medium">状态:</span>
+                            <span
+                                :class="checkoutModal.bill.over_info.includes('超时') ? 'text-red-500' : 'text-green-600'">{{
+                                checkoutModal.bill.over_info }}</span>
                         </div>
-                        
-                        <div v-if="checkoutModal.bill.cost_detail_str" class="mt-2 pt-2 border-t border-gray-200">
-                            <div class="text-xs text-gray-500 mb-1">📌 费用明细:</div>
-                            <div class="text-sm font-bold text-gray-800 break-words">{{ checkoutModal.bill.cost_detail_str }}</div>
+
+                        <!-- 费用明细表 -->
+                        <div v-if="checkoutModal.bill.detail_items && checkoutModal.bill.detail_items.length"
+                            class="mt-2 pt-2 border-t border-gray-200">
+                            <div class="text-xs text-gray-500 mb-2 font-bold">📌 费用明细:</div>
+                            <div v-for="(item, i) in checkoutModal.bill.detail_items" :key="'detail-'+i"
+                                class="flex justify-between py-1"
+                                :class="i < checkoutModal.bill.detail_items.length - 1 ? 'border-b border-dashed border-gray-200' : ''">
+                                <span class="text-gray-600">{{ item.label }}</span>
+                                <span class="font-bold"
+                                    :class="item.amount > 0 ? 'text-gray-800' : 'text-green-600'">¥{{
+                                    item.amount.toFixed(2) }}</span>
+                            </div>
+                            <div class="flex justify-between pt-2 mt-1 border-t border-gray-300">
+                                <span class="font-bold text-gray-800">合计</span>
+                                <span class="font-bold text-lg text-orange-600">¥{{
+                                    checkoutModal.bill.actual_total.toFixed(2) }}</span>
+                            </div>
                         </div>
                     </div>
 
                     <!-- 主团购核销状态切换 (仅团购类型) -->
-                    <div v-if="checkoutModal.order.mode === 'group_buy'" class="mb-3 flex items-center justify-between border border-gray-200 p-3 rounded-lg bg-white">
-                        <span class="font-medium text-purple-700 text-sm flex-1 mr-2">主状态 ({{ checkoutModal.order.gbConfig.name }}):</span>
+                    <div v-if="checkoutModal.order.mode === 'group_buy'"
+                        class="mb-3 flex items-center justify-between border border-gray-200 p-3 rounded-lg bg-white">
+                        <span class="font-medium text-purple-700 text-sm flex-1 mr-2">主状态 ({{
+                            checkoutModal.order.gbConfig.name }}):</span>
                         <div class="flex items-center gap-4 shrink-0">
                             <label class="flex items-center gap-1 text-sm cursor-pointer hover:text-green-600">
-                                <input type="radio" name="mainverify" :value="true" :checked="checkoutModal.gbVerified" @change="toggleMainVerifyInCheckout(true)" class="text-green-500 focus:ring-green-500"> 已核销
+                                <input type="radio" name="mainverify" :value="true" :checked="checkoutModal.gbVerified"
+                                    @change="toggleMainVerifyInCheckout(true)"
+                                    class="text-green-500 focus:ring-green-500"> 已核销
                             </label>
                             <label class="flex items-center gap-1 text-sm cursor-pointer hover:text-red-600">
-                                <input type="radio" name="mainverify" :value="false" :checked="!checkoutModal.gbVerified" @change="toggleMainVerifyInCheckout(false)" class="text-red-500 focus:ring-red-500"> 未核销
+                                <input type="radio" name="mainverify" :value="false"
+                                    :checked="!checkoutModal.gbVerified" @change="toggleMainVerifyInCheckout(false)"
+                                    class="text-red-500 focus:ring-red-500"> 未核销
                             </label>
                         </div>
                     </div>
 
                     <!-- 额外添加的团购券核销状态切换 -->
-                    <div v-if="checkoutModal.bill.added_gb && checkoutModal.bill.added_gb.length > 0" class="mb-4 space-y-2">
-                        <div v-for="(gb, idx) in checkoutModal.bill.added_gb" :key="'checkout-gb-'+idx" class="flex items-center justify-between border border-gray-200 p-3 rounded-lg bg-gray-50">
-                            <span class="font-medium text-indigo-700 text-sm line-clamp-1 flex-1 mr-2" :title="gb.name">➕ {{ gb.name }}</span>
+                    <div v-if="checkoutModal.bill.added_gb && checkoutModal.bill.added_gb.length > 0"
+                        class="mb-4 space-y-2">
+                        <div v-for="(gb, idx) in checkoutModal.bill.added_gb" :key="'checkout-gb-'+idx"
+                            class="flex items-center justify-between border border-gray-200 p-3 rounded-lg bg-gray-50">
+                            <span class="font-medium text-indigo-700 text-sm line-clamp-1 flex-1 mr-2"
+                                :title="gb.name">➕ {{ gb.name }}</span>
                             <div class="flex items-center gap-4 shrink-0">
                                 <label class="flex items-center gap-1 text-sm cursor-pointer hover:text-green-600">
-                                    <input type="radio" :name="'addedgb' + idx" :value="true" @change="toggleAddedGbVerifyInCheckout(idx, true)" :checked="gb.verify_status" class="text-green-500 focus:ring-green-500"> 已核销
+                                    <input type="radio" :name="'addedgb' + idx" :value="true"
+                                        @change="toggleAddedGbVerifyInCheckout(idx, true)" :checked="gb.verify_status"
+                                        class="text-green-500 focus:ring-green-500"> 已核销
                                 </label>
                                 <label class="flex items-center gap-1 text-sm cursor-pointer hover:text-red-600">
-                                    <input type="radio" :name="'addedgb' + idx" :value="false" @change="toggleAddedGbVerifyInCheckout(idx, false)" :checked="!gb.verify_status" class="text-red-500 focus:ring-red-500"> 未核销
+                                    <input type="radio" :name="'addedgb' + idx" :value="false"
+                                        @change="toggleAddedGbVerifyInCheckout(idx, false)" :checked="!gb.verify_status"
+                                        class="text-red-500 focus:ring-red-500"> 未核销
                                 </label>
                             </div>
                         </div>
@@ -437,25 +577,32 @@
 
                     <div class="mb-4 bg-orange-50 p-3 rounded-lg border border-orange-100">
                         <label class="block text-sm font-medium text-orange-800 mb-1">应付/实收金额 (元)</label>
-                        <input v-model.number="checkoutModal.finalTotal" type="number" step="0.1" min="0" autocomplete="off"
+                        <input v-model.number="checkoutModal.finalTotal" type="number" step="0.1" min="0"
+                            autocomplete="off"
                             class="w-full border-0 shadow-inner rounded px-3 py-2 text-2xl font-bold text-center text-orange-600 focus:ring-2 focus:ring-orange-500">
                     </div>
 
                     <div class="mb-5">
                         <label class="block text-sm font-medium text-gray-700 mb-1">订单备注</label>
                         <textarea v-model="checkoutModal.remark" rows="3"
-                            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 resize-none" 
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 resize-none"
                             placeholder="如需备注，请在此输入..."></textarea>
                     </div>
 
-                    <div v-if="teamMembersInCheckout.length > 0" class="mb-4 bg-blue-50 border border-blue-200 p-3 rounded-lg flex flex-col justify-between">
+                    <div v-if="teamMembersInCheckout.length > 0"
+                        class="mb-4 bg-blue-50 border border-blue-200 p-3 rounded-lg flex flex-col justify-between">
                         <div class="text-sm text-blue-800 mb-2 flex justify-between items-center">
-                            <span><strong>👥 连坐同开订单 (共 {{ teamMembersInCheckout.length + 1 }} 台)</strong><br>可一键批量结出同组所有机器。</span>
-                            <button @click="confirmTeamCheckout" class="px-4 py-2 bg-blue-600 text-white rounded font-bold hover:bg-blue-700 btn-action text-sm whitespace-nowrap">一键全结</button>
+                            <span><strong>👥 连坐同开订单 (共 {{ teamMembersInCheckout.length + 1 }}
+                                    台)</strong><br>可一键批量结出同组所有机器。</span>
+                            <button @click="confirmTeamCheckout"
+                                class="px-4 py-2 bg-blue-600 text-white rounded font-bold hover:bg-blue-700 btn-action text-sm whitespace-nowrap">一键全结</button>
                         </div>
-                        <div class="text-xs text-blue-700 bg-blue-100 p-2 rounded flex flex-col gap-1 max-h-32 overflow-y-auto">
-                            <div v-for="t in teamMembersInCheckout" :key="'tm-'+t.id" class="flex justify-between border-b border-blue-200 pb-1 last:border-0 last:pb-0">
-                                <span>📱 {{ t.phone }} <span class="opacity-75 relative bottom-px">({{ t.modeText }})</span></span>
+                        <div
+                            class="text-xs text-blue-700 bg-blue-100 p-2 rounded flex flex-col gap-1 max-h-32 overflow-y-auto">
+                            <div v-for="t in teamMembersInCheckout" :key="'tm-'+t.id"
+                                class="flex justify-between border-b border-blue-200 pb-1 last:border-0 last:pb-0">
+                                <span>📱 {{ t.phone }} <span class="opacity-75 relative bottom-px">({{ t.modeText
+                                        }})</span></span>
                                 <span class="font-medium">预估补交约: ¥{{ t.estimatedCost }}</span>
                             </div>
                         </div>
@@ -504,7 +651,8 @@
                         placeholder="60">
                     <div class="flex gap-2 mt-2">
                         <button v-for="v in [30, 60, 90, 120]" :key="v" @click="addTimeModal.minutes = v"
-                            class="flex-1 py-1.5 bg-gray-100 rounded text-sm hover:bg-gray-200 btn-action">{{ v }}分</button>
+                            class="flex-1 py-1.5 bg-gray-100 rounded text-sm hover:bg-gray-200 btn-action">{{ v
+                            }}分</button>
                     </div>
                 </div>
 
@@ -536,292 +684,320 @@
                         class="flex-1 py-2 bg-teal-600 text-white rounded-lg font-medium hover:bg-teal-700 btn-action">确认添加</button>
                 </div>
             </div>
+        </div>
+
+        <!-- ===== 超时预警弹窗 ===== -->
+        <div v-if="overtimeAlert.show" class="fixed inset-0 bg-black/60 flex items-center justify-center z-[9999] p-4"
+            @click.self="dismissOvertimeAlert">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
+                style="animation: pulse-alert 1s ease-in-out infinite;">
+                <div class="bg-gradient-to-r from-red-500 to-orange-500 px-6 py-4 text-white text-center">
+                    <div class="text-4xl mb-1">⏰</div>
+                    <h3 class="text-xl font-bold">超时预警提醒</h3>
+                    <p class="text-red-100 text-sm mt-1">以下机位已超出预定时长</p>
+                </div>
+                <div class="px-6 py-4 max-h-60 overflow-y-auto">
+                    <div v-for="item in overtimeAlert.items" :key="item.id"
+                        class="flex justify-between items-center py-3 border-b last:border-0">
+                        <div>
+                            <span class="font-bold text-gray-800 text-lg">{{ item.phone }}</span>
+                            <span class="ml-2 text-sm text-gray-500">{{ item.modeText }}</span>
+                        </div>
+                        <span class="text-red-600 font-bold text-sm bg-red-50 px-2 py-1 rounded">超时 {{ item.overMinutes
+                            }} 分钟</span>
+                    </div>
+                </div>
+                <div class="px-6 py-4 border-t bg-gray-50">
+                    <button @click="dismissOvertimeAlert"
+                        class="w-full py-3 bg-red-500 text-white rounded-xl font-bold text-lg hover:bg-red-600 transition">我已知晓，关闭提醒</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 标签页：历史报表 -->
+        <div v-show="currentTab === 'history'" class="bg-white rounded-xl shadow-md p-6">
+            <div class="flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-4">
+                <div class="flex items-center gap-3 flex-wrap">
+                    <h2 class="text-xl font-bold text-gray-800">📊 历史账单明细流水库</h2>
+                    <button v-if="selectedHistory.length > 0" @click="batchDeleteHistory"
+                        class="px-3 py-1 bg-red-100 border border-red-300 text-red-600 rounded hover:bg-red-200 text-sm whitespace-nowrap shadow-sm font-medium">批量删除
+                        ({{ selectedHistory.length }})</button>
+                    <button @click="exportHistoryCSV"
+                        class="px-3 py-1 bg-green-100 border border-green-300 text-green-700 rounded hover:bg-green-200 text-sm whitespace-nowrap shadow-sm font-medium">📥
+                        导出CSV</button>
+                </div>
+                <div class="flex flex-wrap items-center gap-2 bg-gray-50 p-2 rounded-lg border w-full md:w-auto">
+                    <input type="date" v-model="historyDateStart" @change="fetchHistory"
+                        class="border rounded px-2 py-1 text-sm text-gray-600 flex-1 min-w-[110px]">
+                    <span class="text-gray-400 text-sm">至</span>
+                    <input type="date" v-model="historyDateEnd" @change="fetchHistory"
+                        class="border rounded px-2 py-1 text-sm text-gray-600 flex-1 min-w-[110px]">
+                    <div class="flex gap-1 w-full sm:w-auto mt-2 sm:mt-0 justify-end">
+                        <button @click="resetHistoryDates"
+                            class="px-3 py-1 bg-white border border-gray-300 text-gray-600 rounded hover:bg-gray-100 text-sm whitespace-nowrap shadow-sm">显示全部</button>
+                        <button @click="fetchHistory"
+                            class="px-4 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-sm font-medium whitespace-nowrap shadow-sm">检索查询</button>
+                    </div>
+                </div>
+            </div>
+            <!-- 报表搜索栏 -->
+            <div class="mb-4">
+                <input type="text" v-model="historySearchQuery" placeholder="🔍 搜索标识/团购类型/备注..."
+                    class="border rounded-lg px-3 py-2 text-sm w-full focus:ring-2 focus:ring-indigo-400 focus:outline-none">
             </div>
 
-            <!-- ===== 超时预警弹窗 ===== -->
-            <div v-if="overtimeAlert.show" class="fixed inset-0 bg-black/60 flex items-center justify-center z-[9999] p-4" @click.self="dismissOvertimeAlert">
-                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden" style="animation: pulse-alert 1s ease-in-out infinite;">
-                    <div class="bg-gradient-to-r from-red-500 to-orange-500 px-6 py-4 text-white text-center">
-                        <div class="text-4xl mb-1">⏰</div>
-                        <h3 class="text-xl font-bold">超时预警提醒</h3>
-                        <p class="text-red-100 text-sm mt-1">以下机位已超出预定时长</p>
-                    </div>
-                    <div class="px-6 py-4 max-h-60 overflow-y-auto">
-                        <div v-for="item in overtimeAlert.items" :key="item.id" class="flex justify-between items-center py-3 border-b last:border-0">
-                            <div>
-                                <span class="font-bold text-gray-800 text-lg">{{ item.phone }}</span>
-                                <span class="ml-2 text-sm text-gray-500">{{ item.modeText }}</span>
-                            </div>
-                            <span class="text-red-600 font-bold text-sm bg-red-50 px-2 py-1 rounded">超时 {{ item.overMinutes }} 分钟</span>
-                        </div>
-                    </div>
-                    <div class="px-6 py-4 border-t bg-gray-50">
-                        <button @click="dismissOvertimeAlert" class="w-full py-3 bg-red-500 text-white rounded-xl font-bold text-lg hover:bg-red-600 transition">我已知晓，关闭提醒</button>
-                    </div>
+            <!-- 统计汇总 -->
+            <div v-if="historyStats" class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+                <div class="bg-indigo-50 p-3 rounded-lg">
+                    <div class="text-indigo-800 text-xs font-medium">订单总数 (单)</div>
+                    <div class="text-xl font-bold text-indigo-600 mt-1">{{ historyStats.count }}</div>
                 </div>
-            </div>
-
-            <!-- 标签页：历史报表 -->
-            <div v-show="currentTab === 'history'" class="bg-white rounded-xl shadow-md p-6">
-                <div class="flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-4">
-                    <div class="flex items-center gap-3 flex-wrap">
-                        <h2 class="text-xl font-bold text-gray-800">📊 历史账单明细流水库</h2>
-                        <button v-if="selectedHistory.length > 0" @click="batchDeleteHistory" class="px-3 py-1 bg-red-100 border border-red-300 text-red-600 rounded hover:bg-red-200 text-sm whitespace-nowrap shadow-sm font-medium">批量删除 ({{ selectedHistory.length }})</button>
-                        <button @click="exportHistoryCSV" class="px-3 py-1 bg-green-100 border border-green-300 text-green-700 rounded hover:bg-green-200 text-sm whitespace-nowrap shadow-sm font-medium">📥 导出CSV</button>
-                    </div>
-                    <div class="flex flex-wrap items-center gap-2 bg-gray-50 p-2 rounded-lg border w-full md:w-auto">
-                        <input type="date" v-model="historyDateStart" @change="fetchHistory" class="border rounded px-2 py-1 text-sm text-gray-600 flex-1 min-w-[110px]">
-                        <span class="text-gray-400 text-sm">至</span>
-                        <input type="date" v-model="historyDateEnd" @change="fetchHistory" class="border rounded px-2 py-1 text-sm text-gray-600 flex-1 min-w-[110px]">
-                        <div class="flex gap-1 w-full sm:w-auto mt-2 sm:mt-0 justify-end">
-                            <button @click="resetHistoryDates" class="px-3 py-1 bg-white border border-gray-300 text-gray-600 rounded hover:bg-gray-100 text-sm whitespace-nowrap shadow-sm">显示全部</button>
-                            <button @click="fetchHistory" class="px-4 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-sm font-medium whitespace-nowrap shadow-sm">检索查询</button>
-                        </div>
-                    </div>
+                <div class="bg-blue-50 p-3 rounded-lg">
+                    <div class="text-blue-800 text-xs font-medium">累计客数</div>
+                    <div class="text-xl font-bold text-blue-600 mt-1">{{ historyStats.guests }}</div>
                 </div>
-                <!-- 报表搜索栏 -->
-                <div class="mb-4">
-                    <input type="text" v-model="historySearchQuery" placeholder="🔍 搜索标识/团购类型/备注..." 
-                        class="border rounded-lg px-3 py-2 text-sm w-full focus:ring-2 focus:ring-indigo-400 focus:outline-none">
+                <div class="bg-green-50 p-3 rounded-lg">
+                    <div class="text-green-800 text-xs font-medium">营业实收 (单据结算额)</div>
+                    <div class="text-xl font-bold text-green-600 mt-1">¥{{ historyStats.total.toFixed(2) }}</div>
                 </div>
-                
-                <!-- 统计汇总 -->
-                <div v-if="historyStats" class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-                    <div class="bg-indigo-50 p-3 rounded-lg">
-                        <div class="text-indigo-800 text-xs font-medium">订单总数 (单)</div>
-                        <div class="text-xl font-bold text-indigo-600 mt-1">{{ historyStats.count }}</div>
-                    </div>
-                    <div class="bg-blue-50 p-3 rounded-lg">
-                        <div class="text-blue-800 text-xs font-medium">总上机人数</div>
-                        <div class="text-xl font-bold text-blue-600 mt-1">{{ historyStats.guests }}</div>
-                    </div>
-                    <div class="bg-green-50 p-3 rounded-lg">
-                        <div class="text-green-800 text-xs font-medium">营业实收 (单据结算额)</div>
-                        <div class="text-xl font-bold text-green-600 mt-1">¥{{ historyStats.total.toFixed(2) }}</div>
-                    </div>
-                    <div class="bg-purple-50 p-3 rounded-lg">
-                        <div class="text-purple-800 text-xs font-medium">已核销团购 (抵扣价值)</div>
-                        <div class="text-xl font-bold text-purple-600 mt-1">¥{{ historyStats.gbTotal.toFixed(2) }}</div>
-                    </div>
-                    <div class="bg-orange-50 p-3 rounded-lg border border-orange-200">
-                        <div class="text-orange-800 text-xs font-medium">订单总价值 (实收+核销)</div>
-                        <div class="text-xl font-bold text-orange-600 mt-1">¥{{ (historyStats.total + historyStats.gbTotal).toFixed(2) }}</div>
-                    </div>
+                <div class="bg-purple-50 p-3 rounded-lg">
+                    <div class="text-purple-800 text-xs font-medium">已核销团购 (抵扣价值)</div>
+                    <div class="text-xl font-bold text-purple-600 mt-1">¥{{ historyStats.gbTotal.toFixed(2) }}</div>
                 </div>
-
-                <div class="overflow-x-auto rounded-lg border border-gray-200 pb-2">
-                    <table class="min-w-full divide-y divide-gray-200 text-sm whitespace-nowrap">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-3 py-2 w-10 text-center"><input type="checkbox" @change="toggleSelectAllHistory" :checked="isAllHistorySelected"></th>
-                                <th class="px-3 py-2 text-left font-medium text-gray-500 min-w-[110px]">起止时段</th>
-                                <th class="px-3 py-2 text-left font-medium text-gray-500">标识/单号</th>
-                                <th class="px-3 py-2 text-left font-medium text-gray-500 min-w-[100px]">模式与时长</th>
-                                <th class="px-3 py-2 text-left font-medium text-gray-500 min-w-[130px]">定额与暂离明细</th>
-                                <th class="px-3 py-2 text-left font-medium text-gray-500 min-w-[120px]">团购类型</th>
-                                <th class="px-3 py-2 text-right font-medium text-gray-500 min-w-[90px]">团购核销值</th>
-                                <th class="px-3 py-2 text-right font-medium text-gray-500" title="对应系统原始计价">账面总金额</th>
-                                <th class="px-3 py-2 text-right font-medium text-gray-500 text-indigo-600">订单总价值</th>
-                                <th class="px-3 py-2 text-right font-medium text-gray-500 text-orange-600" title="当次收款(未核销亦计入)">结算实收额</th>
-                                <th class="px-3 py-2 text-left font-medium text-gray-500 min-w-[140px] w-[20%]">其它详情/备注记录</th>
-                                <th class="px-3 py-2 text-center font-medium text-gray-500">操作</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200 bg-white">
-                            <tr v-if="filteredHistoryList.length === 0">
-                                <td colspan="12" class="px-4 py-8 text-center text-gray-400">未查询到相关记录</td>
-                            </tr>
-                            <tr v-for="(h, idx) in filteredHistoryList" :key="idx + '_' + h.phone" class="hover:bg-gray-50">
-                                <td class="px-3 py-2 text-center">
-                                    <input type="checkbox" :value="h" v-model="selectedHistory">
-                                </td>
-                                <td class="px-3 py-2 text-xs text-gray-600 leading-tight">
-                                    {{ h.start_time.substring(5, 16) }} ~<br>{{ h.end_time.substring(5, 16) }}
-                                </td>
-                                <td class="px-3 py-2 font-medium">{{ h.phone }}</td>
-                                <td class="px-3 py-2">
-                                    <div class="text-indigo-700 mb-1 font-medium">{{ h.mode_text || getModeText(h.mode) }}</div>
-                                    <div class="text-gray-500 text-[10px]">在场: {{ h.total_dur_str || '-' }}</div>
-                                    <div class="text-indigo-600 text-[10px]">游玩: {{ h.play_dur_str || h.play_dur || '-' }}</div>
-                                </td>
-                                <td class="px-3 py-2 text-xs text-gray-600">
-                                    <div v-if="h.fixed || h.fixed_str" class="mb-1 rounded p-1 bg-yellow-50 text-yellow-800 line-clamp-2" :title="h.fixed || h.fixed_str">{{ h.fixed || h.fixed_str }}</div>
-                                    <div v-if="(h.pause && h.pause !== '无') || (h.pause_dur_str && h.pause_dur_str !== '无')" class="bg-purple-50 p-1 text-purple-700 rounded line-clamp-2" :title="h.pause || h.pause_dur_str">暂离: {{ h.pause || h.pause_dur_str }}</div>
-                                </td>
-                                <td class="px-3 py-2 text-[10px] sm:text-xs">
-                                    <div v-if="h.gb_type" class="text-gray-700">🎟️ {{ h.gb_type }}</div>
-                                    <div v-else class="text-gray-300">-</div>
-                                </td>
-                                <td class="px-3 py-2 text-right">
-                                    <span v-if="h.gb_voucher" class="text-green-600 font-medium font-mono text-xs">¥{{ parseFloat(h.gb_voucher).toFixed(2) }}</span>
-                                    <span v-else class="text-gray-300">-</span>
-                                </td>
-                                <td class="px-3 py-2 text-right text-gray-500 line-through">¥{{ h.total_price }}</td>
-                                <td class="px-3 py-2 text-right font-medium text-indigo-600 text-[13px]">¥{{ (parseFloat(h.actual_total) + parseFloat(h.gb_voucher || 0)).toFixed(2) }}</td>
-                                <td class="px-3 py-2 text-right font-bold text-orange-600 text-[15px]">¥{{ h.actual_total }}</td>
-                                <td class="px-3 py-2 text-[11px] text-gray-600 whitespace-pre-wrap break-all">{{ h.remark }}</td>
-                                <td class="px-3 py-2 text-center align-middle">
-                                    <button @click="deleteHistoryRecord(h)" class="text-xs text-red-500 hover:underline px-2 py-1 rounded hover:bg-red-50">删除</button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <div class="bg-orange-50 p-3 rounded-lg border border-orange-200">
+                    <div class="text-orange-800 text-xs font-medium">订单总价值 (实收+核销)</div>
+                    <div class="text-xl font-bold text-orange-600 mt-1">¥{{ (historyStats.total +
+                        historyStats.gbTotal).toFixed(2) }}</div>
                 </div>
             </div>
 
-            <!-- 标签页：系统设置 -->
-            <div v-show="currentTab === 'settings'" class="max-w-2xl mx-auto space-y-6">
-                <!-- 计费核心设置 -->
-                <div class="bg-white rounded-xl shadow-md p-6">
-                    <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">⚙️ 计费核心设置</h2>
-                    
-                    <div v-if="editingConfig" class="space-y-4">
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm text-gray-600 mb-1">通用基准价 (元/小时)</label>
-                                <input v-model.number="editingConfig.price_base" type="number" class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-indigo-500">
-                            </div>
-                            <div>
-                                <label class="block text-sm text-gray-600 mb-1">基准时长 (分钟)</label>
-                                <input v-model.number="editingConfig.time_base" type="number" class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-indigo-500">
-                            </div>
-                            <div>
-                                <label class="block text-sm text-gray-600 mb-1">加时单价 (元/小时)</label>
-                                <input v-model.number="editingConfig.price_overtime" type="number" class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-indigo-500">
-                            </div>
-                            <div>
-                                <label class="block text-sm text-gray-600 mb-1">全天畅玩价 (元)</label>
-                                <input v-model.number="editingConfig.price_unlimited" type="number" class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-indigo-500">
-                            </div>
-                            <div>
-                                <label class="block text-sm text-gray-600 mb-1">单板不限时 (元)</label>
-                                <input v-model.number="editingConfig.price_single_board" type="number" class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-indigo-500">
-                            </div>
-                            <div>
-                                <label class="block text-sm text-gray-600 mb-1">计费缓冲缓冲 (分钟)</label>
-                                <input v-model.number="editingConfig.buffer_min" type="number" class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-indigo-500">
-                            </div>
-                            <div>
-                                <label class="block text-sm text-gray-600 mb-1">管理后台密码</label>
-                                <input v-model="editingConfig.admin_pwd" type="text" class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-indigo-500">
-                            </div>
-                        </div>
+            <div class="overflow-x-auto rounded-lg border border-gray-200 pb-2">
+                <table class="min-w-full divide-y divide-gray-200 text-sm whitespace-nowrap">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-3 py-2 w-10 text-center"><input type="checkbox"
+                                    @change="toggleSelectAllHistory" :checked="isAllHistorySelected"></th>
+                            <th class="px-3 py-2 text-left font-medium text-gray-500 min-w-[110px]">起止时段</th>
+                            <th class="px-3 py-2 text-left font-medium text-gray-500">标识/单号</th>
+                            <th class="px-3 py-2 text-left font-medium text-gray-500 min-w-[100px]">模式与时长</th>
+                            <th class="px-3 py-2 text-left font-medium text-gray-500 max-w-[200px]">定额与暂离明细</th>
+                            <th class="px-3 py-2 text-left font-medium text-gray-500 min-w-[120px]">团购类型</th>
+                            <th class="px-3 py-2 text-right font-medium text-gray-500 min-w-[90px]">团购核销值</th>
+                            <th class="px-3 py-2 text-right font-medium text-gray-500" title="对应系统原始计价">账面总金额</th>
+                            <th class="px-3 py-2 text-right font-medium text-gray-500 text-indigo-600">订单总价值</th>
+                            <th class="px-3 py-2 text-right font-medium text-gray-500 text-orange-600"
+                                title="当次收款(未核销亦计入)">结算实收额</th>
+                            <th class="px-3 py-2 text-left font-medium text-gray-500 max-w-[200px]">其它详情/备注记录</th>
+                            <th class="px-3 py-2 text-center font-medium text-gray-500">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200 bg-white">
+                        <tr v-if="filteredHistoryList.length === 0">
+                            <td colspan="12" class="px-4 py-8 text-center text-gray-400">未查询到相关记录</td>
+                        </tr>
+                        <tr v-for="(h, idx) in filteredHistoryList" :key="idx + '_' + h.phone" class="hover:bg-gray-50">
+                            <td class="px-3 py-2 text-center">
+                                <input type="checkbox" :value="h" v-model="selectedHistory">
+                            </td>
+                            <td class="px-3 py-2 text-xs text-gray-600 leading-tight">
+                                {{ h.start_time.substring(5, 16) }} ~<br>{{ h.end_time.substring(5, 16) }}
+                            </td>
+                            <td class="px-3 py-2 font-medium">{{ h.phone }}</td>
+                            <td class="px-3 py-2">
+                                <div class="text-indigo-700 mb-1 font-medium">{{ h.mode_text || getModeText(h.mode) }}
+                                </div>
+                                <div class="text-gray-500 text-[10px]">在场: {{ h.total_dur_str || '-' }}</div>
+                                <div class="text-indigo-600 text-[10px]">游玩: {{ h.play_dur_str || h.play_dur || '-' }}
+                                </div>
+                            </td>
+                            <td class="px-3 py-2 text-xs text-gray-600 max-w-[200px] whitespace-normal">
+                                <div v-if="h.fixed || h.fixed_str"
+                                    class="mb-1 rounded p-1.5 bg-yellow-50 text-yellow-800"
+                                    :title="h.fixed || h.fixed_str">
+                                    <div v-for="(part, pidx) in (h.fixed || h.fixed_str || '').split(' | ')"
+                                        :key="'fp-'+pidx" :class="pidx > 0 ? 'mt-0.5' : ''">
+                                        {{ part }}
+                                    </div>
+                                </div>
+                                <div v-if="(h.pause && h.pause !== '无') || (h.pause_dur_str && h.pause_dur_str !== '无')"
+                                    class="bg-purple-50 p-1.5 text-purple-700 rounded break-words"
+                                    :title="h.pause || h.pause_dur_str">暂离: {{ h.pause || h.pause_dur_str }}</div>
+                            </td>
+                            <td class="px-3 py-2 text-[10px] sm:text-xs">
+                                <div v-if="h.gb_type" class="text-gray-700">🎟️ {{ h.gb_type }}</div>
+                                <div v-else class="text-gray-300">-</div>
+                            </td>
+                            <td class="px-3 py-2 text-right">
+                                <span v-if="h.gb_voucher" class="text-green-600 font-medium font-mono text-xs">¥{{
+                                    parseFloat(h.gb_voucher).toFixed(2) }}</span>
+                                <span v-else class="text-gray-300">-</span>
+                            </td>
+                            <td class="px-3 py-2 text-right text-gray-500 line-through">¥{{ h.total_price }}</td>
+                            <td class="px-3 py-2 text-right font-medium text-indigo-600 text-[13px]">¥{{
+                                (parseFloat(h.actual_total) + parseFloat(h.gb_voucher || 0)).toFixed(2) }}</td>
+                            <td class="px-3 py-2 text-right font-bold text-orange-600 text-[15px]">¥{{ h.actual_total }}
+                            </td>
+                            <td
+                                class="px-3 py-2 text-[11px] text-gray-600 whitespace-pre-wrap break-words max-w-[200px] leading-tight">
+                                {{ h.remark }}</td>
+                            <td class="px-3 py-2 text-center align-middle">
+                                <button @click="deleteHistoryRecord(h)"
+                                    class="text-xs text-red-500 hover:underline px-2 py-1 rounded hover:bg-red-50">删除</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
-                        <h3 class="font-bold text-gray-700 mt-8 mb-3 border-b pb-2">进阶阶梯计速参数 (仅选择阶梯算法时生效)</h3>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm text-gray-600 mb-1">算法模式</label>
-                                <select v-model="editingConfig.calc_mode" class="w-full border rounded px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500">
-                                    <option value="exact">精确计价(按比例)</option><option value="step">阶梯计价</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-sm text-gray-600 mb-1">计费块大小 N(分)</label>
-                                <input v-model.number="editingConfig.step_n" type="number" class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-indigo-500">
-                            </div>
-                            <div>
-                                <label class="block text-sm text-gray-600 mb-1">每块收费 Y(元)</label>
-                                <input v-model.number="editingConfig.step_y" type="number" step="0.1" class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-indigo-500">
-                            </div>
-                            <div>
-                                <label class="block text-sm text-gray-600 mb-1">进位分割系数 K</label>
-                                <input v-model.number="editingConfig.step_k" type="number" step="0.1" class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-indigo-500">
-                            </div>
-                            <div>
-                                <label class="block text-sm text-gray-600 mb-1">抹零免单界限 X(分)</label>
-                                <input v-model.number="editingConfig.ceil_x" type="number" class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-indigo-500">
-                            </div>
-                        </div>
+        <!-- 标签页：系统设置 -->
+        <div v-show="currentTab === 'settings'" class="max-w-2xl mx-auto space-y-6">
+            <!-- 计费核心设置 -->
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">⚙️ 计费核心设置</h2>
 
-                        <h3 class="font-bold text-gray-700 mt-8 mb-3 border-b pb-2">🔔 超时提醒设置</h3>
-                        <div class="flex items-center gap-4">
-                            <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="checkbox" v-model="alertSoundEnabled" class="w-4 h-4 text-indigo-600 rounded">
-                                <span class="text-sm text-gray-700">启用超时铃声提醒</span>
-                            </label>
-                            <span class="text-xs text-gray-400">开启后，当定额/团购卡片超时超过缓冲期时会自动弹窗并发出铃声</span>
+                <div v-if="editingConfig" class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm text-gray-600 mb-1">通用基准价 (元/小时)</label>
+                            <input v-model.number="editingConfig.price_base" type="number"
+                                class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-indigo-500">
                         </div>
+                        <div>
+                            <label class="block text-sm text-gray-600 mb-1">基准时长 (分钟)</label>
+                            <input v-model.number="editingConfig.time_base" type="number"
+                                class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-600 mb-1">加时单价 (元/小时)</label>
+                            <input v-model.number="editingConfig.price_overtime" type="number"
+                                class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-600 mb-1">全天畅玩价 (元)</label>
+                            <input v-model.number="editingConfig.price_unlimited" type="number"
+                                class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-600 mb-1">单板不限时 (元)</label>
+                            <input v-model.number="editingConfig.price_single_board" type="number"
+                                class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-600 mb-1">计费缓冲缓冲 (分钟)</label>
+                            <input v-model.number="editingConfig.buffer_min" type="number"
+                                class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                    </div>
 
-                        <div class="mt-8 mb-3 flex items-center justify-between border-b pb-2">
-                            <h3 class="font-bold text-gray-700">🎟️ 团购产品管理</h3>
-                            <button @click="addGbConfig" class="px-2 py-1 bg-green-50 text-green-700 border border-green-200 rounded hover:bg-green-100 text-xs">＋添加团购方案</button>
+                    <h3 class="font-bold text-gray-700 mt-8 mb-3 border-b pb-2">进阶阶梯计速参数 (仅选择阶梯算法时生效)</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm text-gray-600 mb-1">算法模式</label>
+                            <select v-model="editingConfig.calc_mode"
+                                class="w-full border rounded px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500">
+                                <option value="exact">精确计价(按比例)</option>
+                                <option value="step">阶梯计价</option>
+                            </select>
                         </div>
-                        <div class="space-y-4 max-h-80 overflow-y-auto pr-2">
-                            <div v-for="(gb, idx) in editingConfig.group_buys" :key="idx" class="border rounded bg-gray-50 p-3 pt-6 relative text-sm">
-                                <button @click="editingConfig.group_buys.splice(idx, 1)" class="absolute top-1 right-2 text-xs text-red-500 hover:text-red-700">移除❌</button>
-                                <div class="grid grid-cols-2 md:grid-cols-5 gap-2">
-                                    <div class="col-span-2 md:col-span-3">
-                                        <label class="block text-xs text-gray-500 mb-1">展示名称</label>
-                                        <input v-model="gb.name" class="w-full border rounded px-2 py-1">
-                                    </div>
-                                    <div class="col-span-2 md:col-span-2">
-                                        <label class="block text-xs text-gray-500 mb-1">团购类型</label>
-                                        <select v-model="gb.type" class="w-full border rounded px-2 py-1">
-                                            <option value="fixed">计时长(如定额限时)</option>
-                                            <option value="time_slot">包时间段(如10-18点)</option>
-                                            <option value="unlimited">全天畅玩</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs text-gray-500 mb-1">售价(元)</label>
-                                        <input v-model.number="gb.price" type="number" step="0.1" class="w-full border rounded px-2 py-1">
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs text-gray-500 mb-1">包含人数</label>
-                                        <input v-model.number="gb.persons" type="number" min="1" max="20" class="w-full border rounded px-2 py-1">
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs text-gray-500 mb-1">内含时长(分)</label>
-                                        <input v-model.number="gb.limit_min" type="number" :disabled="gb.type === 'unlimited'" class="w-full border rounded px-2 py-1 disabled:bg-gray-100 disabled:text-gray-400">
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs text-gray-500 mb-1">时段起</label>
-                                        <input v-model="gb.start_time" type="time" :disabled="gb.type !== 'time_slot'" class="w-full border rounded px-2 py-1 disabled:bg-gray-100 disabled:text-gray-400">
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs text-gray-500 mb-1">时段止</label>
-                                        <input v-model="gb.end_time" type="time" :disabled="gb.type !== 'time_slot'" class="w-full border rounded px-2 py-1 disabled:bg-gray-100 disabled:text-gray-400">
-                                    </div>
+                        <div>
+                            <label class="block text-sm text-gray-600 mb-1">计费块大小 N(分)</label>
+                            <input v-model.number="editingConfig.step_n" type="number"
+                                class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-600 mb-1">每块收费 Y(元)</label>
+                            <input v-model.number="editingConfig.step_y" type="number" step="0.1"
+                                class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-600 mb-1">进位分割系数 K</label>
+                            <input v-model.number="editingConfig.step_k" type="number" step="0.1"
+                                class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-600 mb-1">抹零免单界限 X(分)</label>
+                            <input v-model.number="editingConfig.ceil_x" type="number"
+                                class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                    </div>
+
+                    <h3 class="font-bold text-gray-700 mt-8 mb-3 border-b pb-2">🔔 超时提醒设置</h3>
+                    <div class="flex items-center gap-4">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" v-model="alertSoundEnabled" class="w-4 h-4 text-indigo-600 rounded">
+                            <span class="text-sm text-gray-700">启用超时铃声提醒</span>
+                        </label>
+                        <span class="text-xs text-gray-400">开启后，当定额/团购卡片超时超过缓冲期时会自动弹窗并发出铃声</span>
+                    </div>
+
+                    <div class="mt-8 mb-3 flex items-center justify-between border-b pb-2">
+                        <h3 class="font-bold text-gray-700">🎟️ 团购产品管理</h3>
+                        <button @click="addGbConfig"
+                            class="px-2 py-1 bg-green-50 text-green-700 border border-green-200 rounded hover:bg-green-100 text-xs">＋添加团购方案</button>
+                    </div>
+                    <div class="space-y-4 max-h-80 overflow-y-auto pr-2">
+                        <div v-for="(gb, idx) in editingConfig.group_buys" :key="idx"
+                            class="border rounded bg-gray-50 p-3 pt-6 relative text-sm">
+                            <button @click="editingConfig.group_buys.splice(idx, 1)"
+                                class="absolute top-1 right-2 text-xs text-red-500 hover:text-red-700">移除❌</button>
+                            <div class="grid grid-cols-2 md:grid-cols-5 gap-2">
+                                <div class="col-span-2 md:col-span-3">
+                                    <label class="block text-xs text-gray-500 mb-1">展示名称</label>
+                                    <input v-model="gb.name" class="w-full border rounded px-2 py-1">
+                                </div>
+                                <div class="col-span-2 md:col-span-2">
+                                    <label class="block text-xs text-gray-500 mb-1">团购类型</label>
+                                    <select v-model="gb.type" class="w-full border rounded px-2 py-1">
+                                        <option value="fixed">计时长(如定额限时)</option>
+                                        <option value="time_slot">包时间段(如10-18点)</option>
+                                        <option value="unlimited">全天畅玩</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-gray-500 mb-1">售价(元)</label>
+                                    <input v-model.number="gb.price" type="number" step="0.1"
+                                        class="w-full border rounded px-2 py-1">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-gray-500 mb-1">包含人数</label>
+                                    <input v-model.number="gb.persons" type="number" min="1" max="20"
+                                        class="w-full border rounded px-2 py-1">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-gray-500 mb-1">内含时长(分)</label>
+                                    <input v-model.number="gb.limit_min" type="number"
+                                        :disabled="gb.type === 'unlimited'"
+                                        class="w-full border rounded px-2 py-1 disabled:bg-gray-100 disabled:text-gray-400">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-gray-500 mb-1">时段起</label>
+                                    <input v-model="gb.start_time" type="time" :disabled="gb.type !== 'time_slot'"
+                                        class="w-full border rounded px-2 py-1 disabled:bg-gray-100 disabled:text-gray-400">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-gray-500 mb-1">时段止</label>
+                                    <input v-model="gb.end_time" type="time" :disabled="gb.type !== 'time_slot'"
+                                        class="w-full border rounded px-2 py-1 disabled:bg-gray-100 disabled:text-gray-400">
                                 </div>
                             </div>
                         </div>
-                        <div class="mt-4 flex justify-end gap-3 pt-4 border-t border-gray-100">
-                            <button @click="editingConfig = null; fetchConfig()" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">取消重置</button>
-                            <button @click="saveConfig" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">保存设置</button>
-                        </div>
                     </div>
-                    <div v-else class="text-center py-6 text-gray-500">
-                        正在加载配置信息...
-                        <button @click="fetchConfig(); currentTab='settings'" class="mt-2 text-indigo-500 hover:underline">在此重试</button>
+                    <div class="mt-4 flex justify-end gap-3 pt-4 border-t border-gray-100">
+                        <button @click="editingConfig = null; fetchConfig()"
+                            class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">取消重置</button>
+                        <button @click="saveConfig"
+                            class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">保存设置</button>
                     </div>
                 </div>
-
-                <!-- 认证授权 -->
-                <div class="bg-white rounded-xl shadow-md p-6">
-                    <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">🔐 系统授权状态</h2>
-                    
-                    <div v-if="authStatus" class="space-y-4">
-                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                            <div>
-                                <div class="text-sm text-gray-500 mb-1">本机机器码</div>
-                                <div class="font-mono text-indigo-700 font-medium select-all">{{ authStatus.machine_code }}</div>
-                            </div>
-                            <div class="text-right">
-                                <div class="text-sm text-gray-500 mb-1">授权状态</div>
-                                <div :class="authStatus.activated ? 'text-green-600' : 'text-orange-500'" class="font-bold flex items-center gap-1">
-                                    <span v-if="authStatus.activated">✅ 已永久激活</span>
-                                    <span v-else>⚠️ 试用版 (人流: {{ authStatus.guests }}/20)</span>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div v-if="!authStatus.activated" class="flex gap-2 mt-4">
-                            <input v-model="activationCode" type="text" placeholder="输入激活密钥..." class="flex-1 border rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 font-mono text-sm uppercase">
-                            <button @click="activateSystem" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium whitespace-nowrap">立刻激活</button>
-                        </div>
-                    </div>
+                <div v-else class="text-center py-6 text-gray-500">
+                    正在加载配置信息...
+                    <button @click="fetchConfig(); currentTab='settings'"
+                        class="mt-2 text-indigo-500 hover:underline">在此重试</button>
                 </div>
             </div>
+
+        </div>
 
         </main>
     </div>
@@ -845,6 +1021,8 @@
                     lastRefreshTime: null,
                     timerInterval: null,
                     orderStartTimes: {},
+                    orderElapsedBase: {},
+                    lastFetchTs: 0,
                     orderFilterMode: 'all',
                     orderSearchQuery: '',
                     orderFilterTabs: [
@@ -861,7 +1039,7 @@
                     remarkModal: { show: false, orderId: null, text: '' },
                     checkoutModal: { show: false, loading: false, order: null, bill: null, finalTotal: 0, remark: '', gbVerified: false },
                     addTimeModal: { show: false, orderId: null, mode: 'direct', minutes: 60, gbName: '', gbVerified: false },
-                    
+
                     // 历史报表
                     historyDateStart: new Date().toISOString().split('T')[0],
                     historyDateEnd: new Date().toISOString().split('T')[0],
@@ -869,18 +1047,16 @@
                     historyStats: null,
                     selectedHistory: [],
                     historySearchQuery: '',
-                    
+
                     // 超时预警
                     overtimeAlert: { show: false, items: [], dismissedIds: {} },
                     overtimeAudioCtx: null,
                     overtimeAudioInterval: null,
                     overtimeCheckCounter: 0,
                     alertSoundEnabled: true,
-                    
-                    // 系统设置与授权
+
+                    // 系统设置
                     editingConfig: null,
-                    authStatus: null,
-                    activationCode: '',
                 };
             },
 
@@ -895,14 +1071,14 @@
                     if (!this.shopConfig || !this.shopConfig.group_buys) return [];
                     return this.shopConfig.group_buys.filter(gb => gb.type === 'time_slot');
                 },
-                // 可用于"加团购券"的倒计时类型团购
+                // 可用于"加团购券"的：仅单人(persons=1) + 计时长类型(type=fixed)
                 countdownGroupBuys() {
                     if (!this.shopConfig || !this.shopConfig.group_buys) return [];
-                    return this.shopConfig.group_buys.filter(gb => gb.type === 'fixed' || gb.type === 'time_slot');
+                    return this.shopConfig.group_buys.filter(gb => gb.type === 'fixed' && (gb.persons || 1) === 1);
                 },
                 teamMembersInCheckout() {
                     if (!this.checkoutModal.order || !this.checkoutModal.order.groupId) return [];
-                    return this.activeOrders.filter(o => 
+                    return this.activeOrders.filter(o =>
                         o.groupId === this.checkoutModal.order.groupId && o.id !== this.checkoutModal.order.id
                     );
                 },
@@ -948,7 +1124,7 @@
                             (o.rawRemark || '').toLowerCase().includes(q)
                         );
                     }
-                    
+
                     // 排序逻辑
                     const sortMode = this.orderSortMode;
                     list.sort((a, b) => {
@@ -964,7 +1140,7 @@
                         }
                         return 0;
                     });
-                    
+
                     return list;
                 },
                 filteredHistoryList() {
@@ -991,8 +1167,10 @@
                 // --- 工具方法 ---
                 // ==========================================
                 getModeText(mode) {
-                    return { 'pay_later':'先玩后付', 'fixed':'普通定额', 'unlimited':'全天畅玩',
-                             'single_board':'单板不限时', 'group_buy':'团购套餐', 'time_slot':'时段优惠' }[mode] || mode;
+                    return {
+                        'pay_later': '先玩后付', 'fixed': '普通定额', 'unlimited': '全天畅玩',
+                        'single_board': '单板不限时', 'group_buy': '团购套餐', 'time_slot': '时段优惠'
+                    }[mode] || mode;
                 },
                 getGroupClass(groupId) {
                     if (!groupId) return '';
@@ -1019,8 +1197,6 @@
                     if (order.isPaused || order.isSuspended) return false;
                     const raw = this.rawOrderData[order.id];
                     if (!raw) return false;
-                    const st = this.orderStartTimes[order.id];
-                    if (!st) return false;
                     const cfg = this.shopConfig || {};
                     const bufferMin = cfg.buffer_min || 10;
                     let limitMin = 0;
@@ -1028,51 +1204,47 @@
                         limitMin = (raw.limit_min || 60) + (raw.added_time_min || 0);
                     } else if (raw.mode === 'group_buy' && raw.gb_config) {
                         if (raw.gb_config.type === 'unlimited') return false;
-                        if (raw.gb_config.type === 'time_slot' && raw.time_slot_end_time) {
-                            try { const se = new Date(raw.time_slot_end_time); limitMin = Math.max(0, (se - st) / 60000) + (raw.added_time_min || 0); } catch { return false; }
+                        if (raw.gb_config.type === 'time_slot' && raw.gb_config.limit_min) {
+                            limitMin = (raw.gb_config.limit_min || 60) + (raw.added_time_min || 0);
                         } else {
                             limitMin = (raw.gb_config.limit_min || 60) + (raw.added_time_min || 0);
                         }
                     } else { return false; }
                     if (limitMin <= 0) return false;
-                    const elapsedMs = Date.now() - st - (raw.total_pause_sec || 0) * 1000;
-                    return (elapsedMs / 60000) > (limitMin + bufferMin);
+                    const elapsedSec = this.getElapsedSec(order.id);
+                    return (elapsedSec / 60) > (limitMin + bufferMin);
+                },
+                // 核心：获取某订单当前已用秒数（服务端基准 + 本地增量）
+                getElapsedSec(orderId) {
+                    const base = this.orderElapsedBase[orderId];
+                    if (base === undefined) return 0;
+                    if (!this.lastFetchTs) return base;
+                    const delta = Math.max(0, (Date.now() - this.lastFetchTs) / 1000);
+                    return Math.floor(base + delta);
                 },
                 getOrderCountdown(order) {
                     if (order.isSuspended) return null;
                     const raw = this.rawOrderData[order.id];
                     if (!raw) return null;
-                    const st = this.orderStartTimes[order.id];
-                    if (!st) return null;
-                    
+
                     let limitMin = 0;
                     const mode = raw.mode;
-                    
+
                     if (mode === 'fixed') {
                         limitMin = (raw.limit_min || 60) + (raw.added_time_min || 0);
                     } else if (mode === 'group_buy' && raw.gb_config) {
                         const gbType = raw.gb_config.type;
                         if (gbType === 'unlimited') return null;
-                        if (gbType === 'time_slot' && raw.time_slot_end_time) {
-                            try {
-                                const se = new Date(raw.time_slot_end_time);
-                                limitMin = Math.max(0, (se - st) / 60000) + (raw.added_time_min || 0);
-                            } catch { return null; }
-                        } else {
-                            limitMin = (raw.gb_config.limit_min || 60) + (raw.added_time_min || 0);
-                        }
+                        limitMin = (raw.gb_config.limit_min || 60) + (raw.added_time_min || 0);
                     } else { return null; }
-                    
+
                     if (limitMin <= 0) return null;
-                    
-                    let elapsedMs = Date.now() - st - (raw.total_pause_sec || 0) * 1000;
-                    if (raw.is_paused && raw.pause_start_ts) {
-                        elapsedMs -= (Date.now() - new Date(raw.pause_start_ts).getTime());
-                    }
-                    const elapsedMin = Math.max(0, elapsedMs / 60000);
+
+                    const elapsedSec = (raw.is_paused || raw.is_suspended) ? (this.orderElapsedBase[order.id] || 0) : this.getElapsedSec(order.id);
+                    const elapsedMin = elapsedSec / 60;
                     const remainMin = limitMin - elapsedMin;
                     const percent = Math.round((elapsedMin / limitMin) * 100);
-                    
+
                     let remainText;
                     if (remainMin <= 0) {
                         const overMin = Math.abs(Math.floor(remainMin));
@@ -1086,7 +1258,7 @@
                         const sec = Math.floor((remainMin - rm) * 60);
                         remainText = h > 0 ? `${h}时${m}分${sec}秒` : `${m}分${sec}秒`;
                     }
-                    
+
                     return { percent, remainText };
                 },
                 onModeChange() { this.newOrder.configId = null; },
@@ -1122,28 +1294,36 @@
                     if (s.is_suspended) return (s.suspend_locked_cost || 0).toFixed(1);
 
                     const cfg = this.shopConfig, mode = s.mode;
-                    let startTime;
-                    try { startTime = new Date(s.start_time); } catch { return '--'; }
-                    const now = new Date();
-                    
-                    let curPause = 0;
-                    if (s.is_paused && s.pause_start_ts) { try { curPause = Math.floor((now - new Date(s.pause_start_ts)) / 1000); } catch {} }
-                    if (s.is_suspended && s.suspend_start_ts) { try { curPause = Math.floor((now - new Date(s.suspend_start_ts)) / 1000); } catch {} }
-                    const totalPause = (s.total_pause_sec || 0) + curPause;
-                    
-                    const effSec = (now - startTime) / 1000 - totalPause;
+                    // 优先使用服务端计算的 elapsed_sec + 本地增量
+                    let effSec;
+                    if (s.elapsed_sec !== undefined) {
+                        const orderId = s.id ? String(s.id) : null;
+                        if (orderId && !s.is_paused && !s.is_suspended) {
+                            effSec = this.getElapsedSec(orderId);
+                        } else {
+                            effSec = s.elapsed_sec;
+                        }
+                    } else {
+                        let startTime;
+                        try { startTime = new Date(s.start_time.replace(/-/g, '/')); } catch { return '--'; }
+                        const now = new Date();
+                        let curPause = 0;
+                        if (s.is_paused && s.pause_start_ts) { try { curPause = Math.floor((now - new Date(s.pause_start_ts.replace(/-/g, '/'))) / 1000); } catch { } }
+                        if (s.is_suspended && s.suspend_start_ts) { try { curPause = Math.floor((now - new Date(s.suspend_start_ts.replace(/-/g, '/'))) / 1000); } catch { } }
+                        effSec = (now - startTime) / 1000 - (s.total_pause_sec || 0) - curPause;
+                    }
                     const minutes = Math.floor(effSec / 60);
-                    
+
                     let total_price = 0;
                     let gb_extra_cost = 0;
                     let gb_voucher_price = 0;
-                    
+
                     if (mode === 'group_buy' && s.gb_config) {
                         const gb = s.gb_config;
                         const bp = gb.price || 0;
                         const gbN = gb.persons || 1;
                         gb_voucher_price = Math.round((bp / gbN) * 100) / 100;
-                        
+
                         if (gb.type === 'unlimited' || gb.type === 'single_board') {
                             total_price = gb_voucher_price;
                         } else {
@@ -1151,13 +1331,13 @@
                             const buf = gb.buffer_min || cfg.buffer_min || 10;
                             const at = s.added_time_min || 0;
                             let over = 0;
-                            
+
                             if (gb.type === 'time_slot' && s.time_slot_end_time) {
                                 try { over = Math.max(0, minutes - (new Date(s.time_slot_end_time) - startTime) / 60000); } catch { over = Math.max(0, minutes - (lm + at)); }
                             } else {
                                 over = Math.max(0, minutes - (lm + at));
                             }
-                            
+
                             const atc = s.added_time_cost || 0;
                             if (over > buf) {
                                 gb_extra_cost = this.getOvertimeCost(Math.floor(over), gb.overtime_price || cfg.price_overtime || 10, cfg);
@@ -1175,41 +1355,47 @@
                         }
                     } else if (mode === 'fixed') {
                         const lm = s.limit_min || 60, at = s.added_time_min || 0, po = cfg.price_overtime || 10, bm = cfg.buffer_min || 10;
-                        const bp = Math.round(((lm) / 60.0) * po * 100) / 100;
-                        const added_time_cost_display = Math.round(((at) / 60.0) * po * 100) / 100;
+                        const tb = cfg.time_base || 60, pb = cfg.price_base || 10.9;
+                        // 正确算法: price_base 覆盖 time_base 分钟
+                        // 定额超出 time_base 的部分 → 阶梯/精确计价
+                        let bp = pb;
+                        const extraInPackage = Math.max(0, lm - tb);
+                        if (extraInPackage > 0) bp += this.getOvertimeCost(extraInPackage, po, cfg);
+                        if (at > 0) bp += this.getOvertimeCost(at, po, cfg);
+                        bp = Math.round(bp * 100) / 100;
                         const o = Math.max(0, minutes - (lm + at));
                         let overtime_cost = o > bm ? this.getOvertimeCost(o, po, cfg) : 0;
-                        total_price = bp + added_time_cost_display + overtime_cost;
+                        total_price = bp + overtime_cost;
                     } else if (mode === 'unlimited' || mode === 'single_board') {
                         total_price = mode === 'unlimited' ? (cfg.price_unlimited || 59.9) : (cfg.price_single_board || 39.9);
                     }
-                    
+
                     let added_gb_cost = 0;
                     if (s.added_gb) {
                         for (const gb of s.added_gb) {
                             if (!gb.verify_status) added_gb_cost += (gb.price || 0);
                         }
                     }
-                    
+
                     let added_time_cost = 0;
                     if (!['fixed', 'group_buy', 'unlimited', 'single_board'].includes(mode)) {
                         added_time_cost = s.added_time_cost || 0;
                     }
-                    
+
                     if (mode === 'fixed' && s.added_gb && s.added_gb.length > 0) {
                         let gb_minutes = 0;
-                        for(const gb of s.added_gb) gb_minutes += (gb.minutes || 0);
+                        for (const gb of s.added_gb) gb_minutes += (gb.minutes || 0);
                         const gb_time_cost = Math.round((gb_minutes / 60.0) * (cfg.price_overtime || 10) * 100) / 100;
                         total_price = Math.round((total_price - gb_time_cost + added_gb_cost + added_time_cost) * 100) / 100;
                     } else {
                         total_price = Math.round((total_price + added_gb_cost + added_time_cost) * 100) / 100;
                     }
-                    
+
                     let actual_total = total_price;
                     if (mode === 'group_buy' && s.gb_verified) {
                         actual_total = Math.round((gb_extra_cost + added_gb_cost + added_time_cost) * 100) / 100;
                     }
-                    
+
                     return actual_total.toFixed(1);
                 },
 
@@ -1231,7 +1417,7 @@
                                 return this.transformOrder(id, ps);
                             }).sort((a, b) => parseInt(b.id) - parseInt(a.id));
                         } else { this.activeOrders = []; this.rawOrderData = {}; }
-                        this.lastRefreshTime = new Date().toLocaleTimeString('zh-CN', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+                        this.lastRefreshTime = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
                         // 清理已不存在订单的已读标记，并立即检测超时
                         const activeIds = new Set(Object.keys(this.rawOrderData));
                         for (const k in this.overtimeAlert.dismissedIds) {
@@ -1243,15 +1429,22 @@
 
                 extractStartTimes(data) {
                     this.orderStartTimes = {};
+                    this.orderElapsedBase = {};
+                    this.lastFetchTs = Date.now();
                     if (!data.g) return;
                     Object.entries(data.g).forEach(([id, s]) => {
                         const ps = typeof s === 'string' ? JSON.parse(s) : s;
-                        if (ps.start_time) this.orderStartTimes[id] = new Date(ps.start_time);
+                        if (ps.start_time) {
+                            try { this.orderStartTimes[id] = new Date(ps.start_time.replace(/-/g, '/')); } catch { }
+                        }
+                        if (ps.elapsed_sec !== undefined) {
+                            this.orderElapsedBase[id] = ps.elapsed_sec;
+                        }
                     });
                 },
 
                 async fetchConfig() {
-                    try { const r = await fetch('/api/config/shop'); if (r.ok) this.shopConfig = await r.json(); } catch {}
+                    try { const r = await fetch('/api/config/shop'); if (r.ok) this.shopConfig = await r.json(); } catch { }
                 },
 
                 transformOrder(id, s) {
@@ -1280,16 +1473,18 @@
                 getStatusInfo(s) {
                     if (s.is_suspended) return { statusText: '挂账中', statusClass: 'bg-purple-100 text-purple-800' };
                     if (s.is_paused) return { statusText: '暂停中', statusClass: 'bg-yellow-100 text-yellow-800' };
-                    return { statusText: '上机中', statusClass: 'bg-green-100 text-green-800' };
+                    return { statusText: '制作中', statusClass: 'bg-green-100 text-green-800' };
                 },
 
                 calcElapsed(s) {
+                    // 优先使用服务端计算的 elapsed_sec
+                    if (s.elapsed_sec !== undefined) return this.fmtSec(s.elapsed_sec);
                     if (!s.start_time) return '--';
                     try {
-                        const st = new Date(s.start_time), now = new Date();
+                        const st = new Date(s.start_time.replace(/-/g, '/')), now = new Date();
                         let ms = now - st - (s.total_pause_sec || 0) * 1000;
-                        if (s.is_paused && s.pause_start_ts) ms -= (now - new Date(s.pause_start_ts));
-                        if (s.is_suspended && s.suspend_start_ts) ms -= (now - new Date(s.suspend_start_ts));
+                        if (s.is_paused && s.pause_start_ts) ms -= (now - new Date(s.pause_start_ts.replace(/-/g, '/')));
+                        if (s.is_suspended && s.suspend_start_ts) ms -= (now - new Date(s.suspend_start_ts.replace(/-/g, '/')));
                         return this.fmtSec(Math.max(0, Math.floor(ms / 1000)));
                     } catch { return '--'; }
                 },
@@ -1301,7 +1496,7 @@
                 },
                 fmtStart(t) {
                     if (!t) return '--';
-                    try { return new Date(t).toLocaleTimeString('zh-CN', { hour:'2-digit', minute:'2-digit' }); } catch { return t; }
+                    try { return new Date(t.replace(/-/g, '/')).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }); } catch { return t; }
                 },
 
                 // 本地跳秒
@@ -1309,11 +1504,9 @@
                     this.stopLocalTimer();
                     this.timerInterval = setInterval(() => {
                         this.activeOrders.forEach(o => {
-                            const st = this.orderStartTimes[o.id];
-                            if (!st) return;
                             if (!o.isPaused && !o.isSuspended) {
-                                const ms = Date.now() - st - (o.totalPauseSec || 0) * 1000;
-                                o.elapsedTime = this.fmtSec(Math.max(0, Math.floor(ms / 1000)));
+                                const sec = this.getElapsedSec(o.id);
+                                o.elapsedTime = this.fmtSec(sec);
                             }
                             const raw = this.rawOrderData[o.id];
                             if (raw) o.estimatedCost = this.calculateEstimatedCost(raw);
@@ -1336,19 +1529,19 @@
                     const cfg = this.shopConfig || {};
                     const bufferMin = cfg.buffer_min || 10;
                     const newOvertime = [];
-                    
+
                     for (const o of this.activeOrders) {
                         if (o.isPaused || o.isSuspended) continue;
                         if (this.overtimeAlert.dismissedIds[o.id]) continue;
-                        
+
                         const raw = this.rawOrderData[o.id];
                         if (!raw) continue;
                         const st = this.orderStartTimes[o.id];
                         if (!st) continue;
-                        
+
                         let limitMin = 0;
                         const mode = raw.mode;
-                        
+
                         if (mode === 'fixed') {
                             limitMin = (raw.limit_min || 60) + (raw.added_time_min || 0);
                         } else if (mode === 'group_buy' && raw.gb_config) {
@@ -1365,13 +1558,13 @@
                         } else {
                             continue; // 先玩后付、不限时等模式不触发
                         }
-                        
+
                         if (limitMin <= 0) continue;
-                        
+
                         const elapsedMs = Date.now() - st - (raw.total_pause_sec || 0) * 1000;
                         const elapsedMin = elapsedMs / 60000;
                         const overMin = Math.floor(elapsedMin - limitMin);
-                        
+
                         if (overMin > bufferMin) {
                             newOvertime.push({
                                 id: o.id,
@@ -1381,21 +1574,21 @@
                             });
                         }
                     }
-                    
+
                     if (newOvertime.length > 0) {
                         this.overtimeAlert.items = newOvertime;
                         this.overtimeAlert.show = true;
                         this.playAlertSound();
                     }
                 },
-                
+
                 playAlertSound() {
                     if (!this.alertSoundEnabled) return;
                     this.stopAlertSound();
                     try {
                         this.overtimeAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
                     } catch { return; }
-                    
+
                     const playBeep = () => {
                         if (!this.overtimeAlert.show || !this.overtimeAudioCtx) return;
                         try {
@@ -1414,24 +1607,24 @@
                                 osc.start(now + offset);
                                 osc.stop(now + offset + 0.12);
                             });
-                        } catch {}
+                        } catch { }
                     };
-                    
+
                     playBeep();
                     this.overtimeAudioInterval = setInterval(playBeep, 2500);
                 },
-                
+
                 stopAlertSound() {
                     if (this.overtimeAudioInterval) {
                         clearInterval(this.overtimeAudioInterval);
                         this.overtimeAudioInterval = null;
                     }
                     if (this.overtimeAudioCtx) {
-                        try { this.overtimeAudioCtx.close(); } catch {}
+                        try { this.overtimeAudioCtx.close(); } catch { }
                         this.overtimeAudioCtx = null;
                     }
                 },
-                
+
                 dismissOvertimeAlert() {
                     // 标记当前轮次的超时订单已读，不再重复弹窗
                     this.overtimeAlert.items.forEach(item => {
@@ -1447,7 +1640,7 @@
                 // ==========================================
                 exportHistoryCSV() {
                     if (!this.historyList || this.historyList.length === 0) return alert('没有可导出的记录');
-                    const headers = ['开始时间','结束时间','标识','模式','在场时长','游玩时长','团购类型','团购核销值','账面总额','订单总价值','结算实收','备注'];
+                    const headers = ['开始时间', '结束时间', '标识', '模式', '在场时长', '游玩时长', '团购类型', '团购核销值', '账面总额', '订单总价值', '结算实收', '备注'];
                     const rows = this.historyList.map(h => [
                         h.start_time, h.end_time, h.phone,
                         h.mode_text || this.getModeText(h.mode),
@@ -1466,7 +1659,7 @@
                     const a = document.createElement('a');
                     a.href = url;
                     const d = new Date();
-                    a.download = `TimerPro流水_${d.getFullYear()}${(d.getMonth()+1).toString().padStart(2,'0')}${d.getDate().toString().padStart(2,'0')}.csv`;
+                    a.download = `TimerPro流水_${d.getFullYear()}${(d.getMonth() + 1).toString().padStart(2, '0')}${d.getDate().toString().padStart(2, '0')}.csv`;
                     a.click();
                     URL.revokeObjectURL(url);
                 },
@@ -1476,8 +1669,10 @@
                     if (this.newOrder.mode === 'group_buy' && !this.newOrder.configId) return alert('请选择团购套餐');
                     if (this.newOrder.mode === 'time_slot' && !this.newOrder.configId) return alert('请选择时段优惠');
                     try {
-                        const r = await fetch('/api/tables/open', { method:'POST', headers:{'Content-Type':'application/json'},
-                            body: JSON.stringify({ phone: this.newOrder.phone, mode: this.newOrder.mode, configId: this.newOrder.configId, count: this.newOrder.count }) });
+                        const r = await fetch('/api/tables/open', {
+                            method: 'POST', headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ phone: this.newOrder.phone, mode: this.newOrder.mode, configId: this.newOrder.configId, count: this.newOrder.count })
+                        });
                         const res = await r.json();
                         if (res.success) { this.newOrder.phone = ''; this.newOrder.configId = null; this.newOrder.count = 1; await this.fetchActiveData(); alert('✅ ' + res.message); }
                     } catch (e) { alert('开台失败: ' + e.message); }
@@ -1487,8 +1682,10 @@
                 async cancelSuspend(orderId) {
                     if (!confirm("确定取消挂账并恢复计时吗？")) return;
                     try {
-                        const r = await fetch('/api/tables/cancel-suspend', { method:'POST', headers:{'Content-Type':'application/json'},
-                            body: JSON.stringify({ order_id: orderId }) });
+                        const r = await fetch('/api/tables/cancel-suspend', {
+                            method: 'POST', headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ order_id: orderId })
+                        });
                         const res = await r.json();
                         if (res.success) { await this.fetchActiveData(); alert('✅ 已取消挂账'); }
                         else alert('取消失败: ' + res.message);
@@ -1503,10 +1700,12 @@
                     this.checkoutModal.order = order;
                     this.checkoutModal.remark = order.rawRemark || '';
                     this.checkoutModal.gbVerified = order.gbVerified || false;
-                    
+
                     try {
-                        const r = await fetch('/api/tables/bill', { method: 'POST', headers:{'Content-Type':'application/json'},
-                            body: JSON.stringify({ order_id: order.id }) });
+                        const r = await fetch('/api/tables/bill', {
+                            method: 'POST', headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ order_id: order.id })
+                        });
                         const res = await r.json();
                         if (res.success) {
                             this.checkoutModal.bill = res.bill;
@@ -1527,17 +1726,19 @@
                 async confirmCheckout() {
                     const m = this.checkoutModal;
                     if (!confirm(`确认结账：${m.order.phone}\n金额：¥${m.finalTotal}\n\n结账后订单将移除。`)) return;
-                    
+
                     const payload = {
                         order_id: m.order.id,
                         final_total: m.finalTotal,
                         remark: m.remark,
                         gb_verified: m.gbVerified
                     };
-                    
+
                     try {
-                        const r = await fetch('/api/tables/checkout', { method:'POST', headers:{'Content-Type':'application/json'},
-                            body: JSON.stringify(payload) });
+                        const r = await fetch('/api/tables/checkout', {
+                            method: 'POST', headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
                         const res = await r.json();
                         if (res.success) {
                             this.checkoutModal.show = false;
@@ -1551,23 +1752,35 @@
                     const m = this.checkoutModal;
                     const members = this.teamMembersInCheckout;
                     if (!confirm(`确认结算连坐同开组合的所有账单吗？\n\n当前主单 (${m.order.phone}) 及同行 ${members.length} 台将被陆续结出。`)) return;
-                    
+
                     this.checkoutModal.loading = true;
                     let successCount = 0;
-                    
+
                     try {
-                        const r1 = await fetch('/api/tables/checkout', { method:'POST', headers:{'Content-Type':'application/json'},
-                            body: JSON.stringify({ order_id: m.order.id, final_total: m.finalTotal, remark: m.remark }) });
+                        const r1 = await fetch('/api/tables/checkout', {
+                            method: 'POST', headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ order_id: m.order.id, final_total: m.finalTotal, remark: m.remark })
+                        });
                         const res1 = await r1.json();
                         if (res1.success) successCount++;
-                        
+
                         for (let t of members) {
-                            const rt = await fetch('/api/tables/checkout', { method:'POST', headers:{'Content-Type':'application/json'},
-                                body: JSON.stringify({ order_id: t.id }) });
+                            // 先获取该成员的账单
+                            const billR = await fetch('/api/tables/bill', {
+                                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ order_id: t.id })
+                            });
+                            const billRes = await billR.json();
+                            const memberTotal = billRes.success ? billRes.bill.actual_total : (t.cost || 0);
+
+                            const rt = await fetch('/api/tables/checkout', {
+                                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ order_id: t.id, final_total: memberTotal })
+                            });
                             const rest = await rt.json();
                             if (rest.success) successCount++;
                         }
-                        
+
                         this.checkoutModal.show = false;
                         await this.fetchActiveData();
                         alert(`✅ 批量结账完毕！成功结出 ${successCount} 台。`);
@@ -1578,34 +1791,42 @@
                 async confirmSuspendFromCheckout() {
                     const m = this.checkoutModal;
                     if (!confirm(`确认挂账等候？\n冻结金额：¥${m.finalTotal}`)) return;
-                    
+
                     try {
                         // 1. 如果团购核销状态或备注改变了，顺便更新下备注和核销状态
                         if (m.order.mode === 'group_buy' && m.order.gbVerified !== m.gbVerified) {
-                            await fetch('/api/tables/verify', { method:'POST', headers:{'Content-Type':'application/json'},
-                                body: JSON.stringify({ order_id: m.order.id, verified: m.gbVerified }) });
+                            await fetch('/api/tables/verify', {
+                                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ order_id: m.order.id, verified: m.gbVerified })
+                            });
                         }
                         if (m.remark) {
-                            await fetch('/api/tables/remark', { method:'POST', headers:{'Content-Type':'application/json'},
-                                body: JSON.stringify({ order_id: m.order.id, remark: (m.order.rawRemark + '\n' + m.remark).trim() }) });
+                            await fetch('/api/tables/remark', {
+                                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ order_id: m.order.id, remark: (m.order.rawRemark + '\n' + m.remark).trim() })
+                            });
                         }
-                        
+
                         // 2. 挂账
-                        const r = await fetch('/api/tables/suspend', { method:'POST', headers:{'Content-Type':'application/json'},
-                            body: JSON.stringify({ order_id: m.order.id, locked_cost: m.finalTotal }) });
+                        const r = await fetch('/api/tables/suspend', {
+                            method: 'POST', headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ order_id: m.order.id, locked_cost: m.finalTotal })
+                        });
                         const res = await r.json();
-                        if (res.success) { 
-                            this.checkoutModal.show = false; 
-                            await this.fetchActiveData(); 
-                            alert('✅ ' + res.message); 
+                        if (res.success) {
+                            this.checkoutModal.show = false;
+                            await this.fetchActiveData();
+                            alert('✅ ' + res.message);
                         } else alert('挂账失败: ' + res.message);
                     } catch (e) { alert('挂账失败: ' + e.message); }
                 },
 
                 async togglePause(orderId) {
                     try {
-                        const r = await fetch('/api/tables/pause', { method:'POST', headers:{'Content-Type':'application/json'},
-                            body: JSON.stringify({ order_id: orderId }) });
+                        const r = await fetch('/api/tables/pause', {
+                            method: 'POST', headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ order_id: orderId })
+                        });
                         const res = await r.json();
                         if (res.success) await this.fetchActiveData();
                         else alert('操作失败: ' + res.message);
@@ -1618,7 +1839,7 @@
                         if (r.ok) {
                             this.fetchActiveData();
                         } else { alert('移除失败'); }
-                    } catch(e) { alert(e.message); }
+                    } catch (e) { alert(e.message); }
                 },
 
                 // --- 修改备注 ---
@@ -1628,8 +1849,10 @@
                 async saveRemark() {
                     const { orderId, text } = this.remarkModal;
                     try {
-                        const r = await fetch('/api/tables/remark', { method:'POST', headers:{'Content-Type':'application/json'},
-                            body: JSON.stringify({ order_id: orderId, remark: text }) });
+                        const r = await fetch('/api/tables/remark', {
+                            method: 'POST', headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ order_id: orderId, remark: text })
+                        });
                         const res = await r.json();
                         if (res.success) { this.remarkModal.show = false; await this.fetchActiveData(); }
                         else alert('保存失败: ' + res.message);
@@ -1652,8 +1875,10 @@
                         payload.gb_verified = m.gbVerified;
                     }
                     try {
-                        const r = await fetch('/api/tables/add-time', { method:'POST', headers:{'Content-Type':'application/json'},
-                            body: JSON.stringify(payload) });
+                        const r = await fetch('/api/tables/add-time', {
+                            method: 'POST', headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
                         const res = await r.json();
                         if (res.success) { this.addTimeModal.show = false; await this.fetchActiveData(); alert('✅ ' + res.message); }
                         else alert('添加失败: ' + res.message);
@@ -1663,11 +1888,13 @@
                 // --- 团购核销切换 ---
                 async toggleVerify(orderId, verified, addedGbIndex = null) {
                     try {
-                        const body = addedGbIndex !== null 
+                        const body = addedGbIndex !== null
                             ? { order_id: orderId, verified, added_gb_index: addedGbIndex }
                             : { order_id: orderId, verified };
-                        const r = await fetch('/api/tables/verify', { method:'POST', headers:{'Content-Type':'application/json'},
-                            body: JSON.stringify(body) });
+                        const r = await fetch('/api/tables/verify', {
+                            method: 'POST', headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(body)
+                        });
                         const res = await r.json();
                         if (res.success) await this.fetchActiveData();
                         else alert('操作失败: ' + res.message);
@@ -1677,16 +1904,20 @@
                 async toggleMainVerifyInCheckout(verify) {
                     this.checkoutModal.loading = true;
                     try {
-                        const r1 = await fetch('/api/tables/verify', { method:'POST', headers:{'Content-Type':'application/json'},
-                            body: JSON.stringify({ order_id: this.checkoutModal.order.id, verified: verify }) });
+                        const r1 = await fetch('/api/tables/verify', {
+                            method: 'POST', headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ order_id: this.checkoutModal.order.id, verified: verify })
+                        });
                         const res1 = await r1.json();
                         if (!res1.success) throw new Error(res1.message);
-                        
+
                         this.checkoutModal.gbVerified = verify;
                         await this.fetchActiveData();
-                        
-                        const r2 = await fetch('/api/tables/bill', { method: 'POST', headers:{'Content-Type':'application/json'},
-                            body: JSON.stringify({ order_id: this.checkoutModal.order.id }) });
+
+                        const r2 = await fetch('/api/tables/bill', {
+                            method: 'POST', headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ order_id: this.checkoutModal.order.id })
+                        });
                         const res2 = await r2.json();
                         if (res2.success) {
                             this.checkoutModal.bill = res2.bill;
@@ -1700,15 +1931,19 @@
                 async toggleAddedGbVerifyInCheckout(idx, verify) {
                     this.checkoutModal.loading = true;
                     try {
-                        const r1 = await fetch('/api/tables/verify', { method:'POST', headers:{'Content-Type':'application/json'},
-                            body: JSON.stringify({ order_id: this.checkoutModal.order.id, verified: verify, added_gb_index: idx }) });
+                        const r1 = await fetch('/api/tables/verify', {
+                            method: 'POST', headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ order_id: this.checkoutModal.order.id, verified: verify, added_gb_index: idx })
+                        });
                         const res1 = await r1.json();
                         if (!res1.success) throw new Error(res1.message);
-                        
+
                         await this.fetchActiveData();
-                        
-                        const r2 = await fetch('/api/tables/bill', { method: 'POST', headers:{'Content-Type':'application/json'},
-                            body: JSON.stringify({ order_id: this.checkoutModal.order.id }) });
+
+                        const r2 = await fetch('/api/tables/bill', {
+                            method: 'POST', headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ order_id: this.checkoutModal.order.id })
+                        });
                         const res2 = await r2.json();
                         if (res2.success) {
                             this.checkoutModal.bill = res2.bill;
@@ -1754,7 +1989,7 @@
                     try {
                         const r = await fetch(`/api/history`, {
                             method: 'DELETE',
-                            headers: {'Content-Type': 'application/json'},
+                            headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ phone: record.phone, end_time: record.end_time })
                         });
                         const res = await r.json();
@@ -1762,17 +1997,17 @@
                             this.selectedHistory = this.selectedHistory.filter(s => s.phone !== record.phone || s.end_time !== record.end_time);
                             this.fetchHistory();
                         } else { alert(res.detail || '删除失败'); }
-                    } catch(e) { alert(e.message); }
+                    } catch (e) { alert(e.message); }
                 },
                 async batchDeleteHistory() {
                     if (this.selectedHistory.length === 0) return;
                     if (!confirm(`确定要一次性永久删除选中的 ${this.selectedHistory.length} 条历史流水记录吗？\n警告：将被直接丢弃且由于没有收银入库可能会导致账目统计下降！`)) return;
-                    
+
                     try {
-                        const recordsToDel = this.selectedHistory.map(h => ({ phone: h.phone, end_time: h.end_time }));
-                        const r = await fetch(`/api/history`, {
-                            method: 'DELETE',
-                            headers: {'Content-Type': 'application/json'},
+                        const recordsToDel = this.selectedHistory.map(h => ({ phone: h.phone, end_time: h.end_time, order_id: h.order_id }));
+                        const r = await fetch(`/api/history/batch-delete`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ records: recordsToDel })
                         });
                         const res = await r.json();
@@ -1780,7 +2015,7 @@
                             this.selectedHistory = [];
                             this.fetchHistory();
                         } else { alert(res.detail || '批量删除失败'); }
-                    } catch(e) { alert(e.message); }
+                    } catch (e) { alert(e.message); }
                 },
 
                 toggleSelectAllHistory(e) {
@@ -1807,35 +2042,22 @@
                 },
                 async saveConfig() {
                     try {
-                        const r = await fetch('/api/config/shop', { method:'PUT', headers:{'Content-Type':'application/json'},
-                            body: JSON.stringify({ config: this.editingConfig }) });
+                        const r = await fetch('/api/config/shop', {
+                            method: 'PUT', headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ config: this.editingConfig })
+                        });
                         const res = await r.json();
                         if (res.success) {
                             alert('✅ 配置保存成功');
-                            this.editingConfig = null;
                             await this.fetchConfig();
+                            // 重要：保存后立即用最新的 shopConfig 重新填充 editingConfig，防止界面跳到"正在加载"
+                            if (this.shopConfig) {
+                                this.editingConfig = JSON.parse(JSON.stringify(this.shopConfig));
+                            }
                         } else alert('保存配置失败: ' + res.message);
                     } catch (e) { alert('保存配置出错: ' + e.message); }
                 },
-                async fetchAuthStatus() {
-                    try {
-                        const r = await fetch('/api/auth/status');
-                        this.authStatus = await r.json();
-                    } catch (e) {}
-                },
-                async activateSystem() {
-                    if (!this.activationCode.trim()) return alert('请输入激活码');
-                    try {
-                        const r = await fetch('/api/auth/activate', { method:'POST', headers:{'Content-Type':'application/json'},
-                            body: JSON.stringify({ code: this.activationCode.trim() }) });
-                        const res = await r.json();
-                        if (res.success) {
-                            alert('✅ 系统激活成功！欢迎使用 TimerPro');
-                            this.activationCode = '';
-                            await this.fetchAuthStatus();
-                        } else alert('激活失败: ' + res.message);
-                    } catch (e) { alert('激活过程出错: ' + e.message); }
-                }
+                async fetchAuthStatus() { },
             },
 
             watch: {
@@ -1848,7 +2070,7 @@
                 }
             },
 
-            
+
             mounted() {
                 const token = localStorage.getItem('access_token');
                 if (!token) { window.location.href = '/login.html'; return; }
@@ -1865,4 +2087,5 @@
         }).mount('#app');
     </script>
 </body>
+
 </html>
