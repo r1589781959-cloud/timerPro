@@ -1,135 +1,73 @@
-# TimerPro SaaS 多商家收银系统
+# TimerPro SaaS 多商家智能计时收银系统 (手作/DIY版)
 
 ## 系统概述
 
-TimerPro SaaS 是一个多商家智能收银系统，支持多个商家同时在线使用，数据完全隔离。
+TimerPro SaaS 是一款专为各类按时计费实体店（特别优化的场景为：手作店、DIY工坊、桌游店、台球厅等）打造的多租户智能收银系统。
+系统采用真·SaaS架构设计，支持多个商家独立注册、独立设置、完全数据物理隔离。前端采用现代化动态响应设计，体验媲美原生App。
+
+## 系统升级特性（最新 SaaS 版）
+
+1. **多端时钟同步机制**：首创基于 `elapsed_sec` 增量计算的纯净前端渲染机制，永久解决 Safari/Chrome 等跨浏览器 `Date` 对象解析不一致导致的计时器乱码跳 0 Bug。
+2. **场景文案适配**：深度贴合手作店场景逻辑，摒弃传统网吧的“上机/下机”词汇，采用“制作中/开单”等优雅文案。
+3. **精准的进阶核心计费引擎**：
+   - 独家实现了“进阶阶梯计速”与“精确按比例计速”自如切换。
+   - 具有智能“抹零免单界限(X)”、“进位分割系数(K)”等专业级行业特性。
+   - 大幅优化了团购券加时算法与基础全局时价的解耦映射模式。
+4. **验证机制国际化**：从传统的手机号验证全面升级为更为国际化、低成本的 **邮箱注册与验证** 系统。
+
+---
 
 ## 技术栈
 
-- **后端**: FastAPI + SQLAlchemy + SQLite
-- **认证**: JWT Token + Bcrypt 密码加密
-- **前端**: Vue 3 + Tailwind CSS
-- **部署**: Docker + Docker Compose
+- **后端核心**: FastAPI (Python) + SQLAlchemy + SQLite
+- **安全认证**: JWT Token 双令牌机制 + Bcrypt 密码强加密
+- **前端页面**: Vue 3 (Options API) + Tailwind CSS + RemixIcon
+- **部署环境**: Docker + Docker Compose
 
-## 快速开始
+---
 
-### 1. 安装依赖
+## 快速部署指南
+
+### 1. 服务初始化
 
 ```bash
 cd web_app
 pip install -r requirements.txt
+python init_db.py  # 首次运行：创建所有基础数据库结构
 ```
 
-### 2. 初始化数据库
+### 2. 启动服务 
 
 ```bash
-python init_db.py
+python main_saas.py  # 默认在 8000 端口启动
 ```
 
-这将创建数据库表并初始化测试数据：
-- 测试商家: `starbilliards`
-- 管理员账号: `admin` / `admin888`
+### 3. 访问入口 (本地测试)
 
-### 3. 启动服务器
+- **主入口(自动拦截未登录)**: `http://localhost:8000/index.html`
+- **注册页面**: `http://localhost:8000/register.html`
+- **登录页面**: `http://localhost:8000/login.html`
 
-```bash
-# 开发模式
-python main_saas.py
+---
 
-# 或使用 uvicorn
-uvicorn main_saas:app --reload --host 0.0.0.0 --port 8000
-```
+## 核心数据库组成
 
-### 4. 访问系统
+- `shops`: 商家基本信息及核心计费规则大 JSON (Config_data)
+- `users`: 全局商家及员工账号系统 
+- `verify_codes`: 邮箱验证码流转表
+- `orders`: 当前活跃状态的客流/制单数据表
+- `order_history` / `order_pause_logs`: 挂账、报表结算流水相关核心账本
 
-- **注册页面**: http://localhost:8000/register.html
-- **登录页面**: http://localhost:8000/login.html
-- **主界面**: http://localhost:8000/index.html
+---
 
-## Docker 部署
+## 项目开发&迭代里程碑
 
-```bash
-# 构建镜像
-docker-compose build
-
-# 启动服务
-docker-compose up -d
-
-# 查看日志
-docker-compose logs -f
-```
-
-## API 文档
-
-启动服务器后访问：
-- **Swagger UI**: http://localhost:8000/docs
-- **ReDoc**: http://localhost:8000/redoc
-
-## 主要功能
-
-### 商家管理
-- 商家注册（手机验证码验证）
-- 商家登录（JWT Token 认证）
-- 商家信息管理
-- 员工账号管理
-
-### 订单管理
-- 开台/结账
-- 订单状态管理（暂停/恢复/挂账）
-- 加时功能
-- 团购核销
-- 历史记录查询
-
-### 配置管理
-- 店铺配置（价格、时间等）
-- 团购配置管理
-- 计费模式设置
-
-## 测试
-
-运行测试脚本：
-
-```bash
-python test_saas.py
-```
-
-## 数据库结构
-
-### 主要表
-
-- `shops` - 商家表
-- `users` - 用户表
-- `orders` - 订单表
-- `order_pause_logs` - 暂停日志表
-- `order_add_times` - 加时记录表
-- `order_group_buys` - 团购订单关联表
-- `group_buys` - 团购配置表
-- `system_configs` - 系统配置表
-- `order_history` - 订单历史表
-- `verify_codes` - 验证码表
-
-## 安全说明
-
-1. **密码加密**: 使用 Bcrypt 算法加密存储
-2. **JWT Token**: 支持访问令牌和刷新令牌
-3. **数据隔离**: 每个商家的数据完全隔离
-4. **权限控制**: 支持角色权限管理（admin/employee/staff）
-
-## 与单商家版本的兼容性
-
-- 桌面版（timerProV15.py）保持独立，使用文件存储
-- Web 版本已升级为多商家 SaaS 架构
-- 小程序版本通过 API 接口使用云端数据
-
-## 开发计划
-
-- [ ] 完善订单管理功能（开台、结账等）
-- [ ] 添加数据统计和报表
-- [ ] 实现消息通知功能
-- [ ] 集成短信验证码服务
-- [ ] 添加文件上传功能（Logo等）
-- [ ] 小程序端对接
-
-## 问题反馈
-
-如有问题，请联系开发团队。
+- [x] 多租户架构底层逻辑重构
+- [x] 全面转为邮箱验证码校验流转
+- [x] PC & 移动端全兼容的玻璃拟态(Glassmorphism)自适应 UI
+- [x] iOS/Mac Safari 计时器归零漏洞终极修复
+- [x] SaaS设置项全面引入悬浮 Tooltip 专业级提示气泡
+- [x] 单机/连坐同行订单一键批量结账逻辑
+- [ ] 增加演示模式/沙盒临时店功能 (规划中)
+- [ ] 系统数据报表大屏可视化 (规划中)
+- [ ] 日志追溯与错误上报中心 (规划中)

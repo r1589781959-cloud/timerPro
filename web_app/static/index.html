@@ -7,6 +7,7 @@
     <title>TimerPro 云端收银台</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <style>
         /* 模态框遮罩 */
         .modal-overlay {
@@ -34,6 +35,53 @@
         .suspended-card {
             border-left: 4px solid #8b5cf6 !important;
             background: #f5f3ff !important;
+        }
+
+        /* Tooltip Styles */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+        }
+
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            opacity: 0;
+            width: max-content;
+            max-width: 250px;
+            background-color: #374151;
+            color: #fff;
+            text-align: left;
+            border-radius: 6px;
+            padding: 8px 12px;
+            position: absolute;
+            z-index: 50;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            transition: opacity 0.3s;
+            font-size: 0.75rem;
+            font-weight: normal;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            pointer-events: none;
+            white-space: normal;
+            line-height: 1.4;
+        }
+
+        .tooltip .tooltip-text::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #374151 transparent transparent transparent;
+        }
+
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
         }
 
         /* 按钮悬停效果 */
@@ -859,64 +907,122 @@
                 <div v-if="editingConfig" class="space-y-4">
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm text-gray-600 mb-1">通用基准价 (元/小时)</label>
+                            <label class="block text-sm text-gray-600 mb-1 flex items-center gap-1">
+                                通用基准价 (元/小时)
+                                <div class="tooltip text-indigo-400 group">
+                                    <i class="ri-question-line text-[15px]"></i>
+                                    <span class="tooltip-text">默认模式下，计算费用的基础标准价格。如果不使用进阶阶梯算法，系统会按此价格和在场时长进行折合计算。</span>
+                                </div>
+                            </label>
                             <input v-model.number="editingConfig.price_base" type="number"
                                 class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-indigo-500">
                         </div>
                         <div>
-                            <label class="block text-sm text-gray-600 mb-1">基准时长 (分钟)</label>
+                            <label class="block text-sm text-gray-600 mb-1 flex items-center gap-1">
+                                基准时长 (分钟)
+                                <div class="tooltip text-indigo-400 group">
+                                    <i class="ri-question-line text-[15px]"></i>
+                                    <span class="tooltip-text">一小时=60分。配合基准价使用，通常保持60即可。系统内部计算单价率的基础。</span>
+                                </div>
+                            </label>
                             <input v-model.number="editingConfig.time_base" type="number"
                                 class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-indigo-500">
                         </div>
                         <div>
-                            <label class="block text-sm text-gray-600 mb-1">加时单价 (元/小时)</label>
+                            <label class="block text-sm text-gray-600 mb-1 flex items-center gap-1">
+                                加时单价 (元/小时)
+                                <div class="tooltip text-indigo-400 group">
+                                    <i class="ri-question-line text-[15px]"></i>
+                                    <span class="tooltip-text">定额/时段等包含固定时长的套餐，超出固定时长后的加收标准（即超时计费汇率）。</span>
+                                </div>
+                            </label>
                             <input v-model.number="editingConfig.price_overtime" type="number"
                                 class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-indigo-500">
                         </div>
                         <div>
-                            <label class="block text-sm text-gray-600 mb-1">全天畅玩价 (元)</label>
+                            <label class="block text-sm text-gray-600 mb-1 flex items-center gap-1">
+                                全天畅玩价 (元)
+                            </label>
                             <input v-model.number="editingConfig.price_unlimited" type="number"
                                 class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-indigo-500">
                         </div>
                         <div>
-                            <label class="block text-sm text-gray-600 mb-1">单板不限时 (元)</label>
+                            <label class="block text-sm text-gray-600 mb-1 flex items-center gap-1">
+                                单板不限时 (元)
+                            </label>
                             <input v-model.number="editingConfig.price_single_board" type="number"
                                 class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-indigo-500">
                         </div>
                         <div>
-                            <label class="block text-sm text-gray-600 mb-1">计费缓冲缓冲 (分钟)</label>
+                            <label class="block text-sm text-gray-600 mb-1 flex items-center gap-1">
+                                计费缓冲缓冲 (分钟)
+                                <div class="tooltip text-red-400 group">
+                                    <i class="ri-alert-line text-[15px]"></i>
+                                    <span class="tooltip-text border border-red-500 shadow-red-200">重要参数：顾客超时多少分钟内不额外扣费。例如设置为10，玩了1小时9分钟只收1小时的钱。这是提供人情味的容错机制。</span>
+                                </div>
+                            </label>
                             <input v-model.number="editingConfig.buffer_min" type="number"
                                 class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-indigo-500">
                         </div>
                     </div>
 
-                    <h3 class="font-bold text-gray-700 mt-8 mb-3 border-b pb-2">进阶阶梯计速参数 (仅选择阶梯算法时生效)</h3>
+                    <h3 class="font-bold text-gray-700 mt-8 mb-3 border-b pb-2 flex items-center gap-2">
+                        进阶阶梯计速参数 (仅选择阶梯算法时生效)
+                        <div class="tooltip text-indigo-500">
+                            <i class="ri-information-line text-lg"></i>
+                            <span class="tooltip-text">阶梯算法适用于将计算切割为多个"块(计费周期)"的场景。例如：每10分钟收费5元，不满规定时间也可按逻辑进行舍去。这是一种更贴近实体的分段计费模型。</span>
+                        </div>
+                    </h3>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm text-gray-600 mb-1">算法模式</label>
                             <select v-model="editingConfig.calc_mode"
                                 class="w-full border rounded px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500">
                                 <option value="exact">精确计价(按比例)</option>
-                                <option value="step">阶梯计价</option>
+                                <option value="step">阶梯计价(按块)</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm text-gray-600 mb-1">计费块大小 N(分)</label>
+                            <label class="block text-sm text-gray-600 mb-1 flex items-center gap-1">
+                                计费块大小 N(分)
+                                <div class="tooltip text-indigo-400">
+                                    <i class="ri-question-line text-[15px]"></i>
+                                    <span class="tooltip-text">每一个收费周期的时长。如设为"30"，代表每30分钟为一个计算切片。</span>
+                                </div>
+                            </label>
                             <input v-model.number="editingConfig.step_n" type="number"
                                 class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-indigo-500">
                         </div>
                         <div>
-                            <label class="block text-sm text-gray-600 mb-1">每块收费 Y(元)</label>
+                            <label class="block text-sm text-gray-600 mb-1 flex items-center gap-1">
+                                每块收费 Y(元)
+                                <div class="tooltip text-indigo-400">
+                                    <i class="ri-question-line text-[15px]"></i>
+                                    <span class="tooltip-text">对应上方 N(分) 产生的基础金额。例如 N=30，Y=15，代表每经过30分钟，产生 15 元。</span>
+                                </div>
+                            </label>
                             <input v-model.number="editingConfig.step_y" type="number" step="0.1"
                                 class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-indigo-500">
                         </div>
                         <div>
-                            <label class="block text-sm text-gray-600 mb-1">进位分割系数 K</label>
+                            <label class="block text-sm text-gray-600 mb-1 flex items-center gap-1">
+                                进位分割系数 K
+                                <div class="tooltip text-indigo-400">
+                                    <i class="ri-question-line text-[15px]"></i>
+                                    <span class="tooltip-text">内部进位算法系数。通常填1。若要实现特殊的四舍五入或向上取整逻辑可调整。默认情况下无需更改。</span>
+                                </div>
+                            </label>
                             <input v-model.number="editingConfig.step_k" type="number" step="0.1"
                                 class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-indigo-500">
                         </div>
                         <div>
-                            <label class="block text-sm text-gray-600 mb-1">抹零免单界限 X(分)</label>
+                            <label class="block text-sm text-gray-600 mb-1 flex items-center gap-1">
+                                抹零免单界限 X(分)
+                                <div class="tooltip text-indigo-400">
+                                    <i class="ri-question-line text-[15px]"></i>
+                                    <span class="tooltip-text">阶梯算法下的独立缓冲时间。每一个新的计费块开始时，前 X 分钟内结出不会被视作进入了这一个收费块（等于该计费块免单）。</span>
+                                </div>
+                            </label>
                             <input v-model.number="editingConfig.ceil_x" type="number"
                                 class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-indigo-500">
                         </div>
