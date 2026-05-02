@@ -2,10 +2,15 @@
 数据库初始化和迁移脚本
 """
 from sqlalchemy.orm import Session
-from .database import SessionLocal, create_tables, Shop, User, SystemConfig, GroupBuy
 import json
 from pathlib import Path
-from .auth import jwt_service
+
+try:
+    from .database import SessionLocal, create_tables, Shop, User, SystemConfig, GroupBuy
+except ImportError:
+    from database import SessionLocal, create_tables, Shop, User, SystemConfig, GroupBuy
+
+DEFAULT_ADMIN_PASSWORD = "admin123"
 
 def init_default_data():
     """初始化默认数据（如果不存在）"""
@@ -35,13 +40,14 @@ def init_default_data():
         import bcrypt
 
         # 生成密码哈希
-        password_bytes = "admin123".encode('utf-8')
+        password_bytes = DEFAULT_ADMIN_PASSWORD.encode('utf-8')
         salt = bcrypt.gensalt()
         password_hash = bcrypt.hashpw(password_bytes, salt).decode('utf-8')
 
         test_user = User(
             shop_id=test_shop.shop_id,
             username="admin",
+            email="admin@timerpro.local",
             password_hash=password_hash,
             role="admin",
             real_name="系统管理员",
@@ -152,7 +158,8 @@ def init_default_data():
         print(f"  - 联系电话: {test_shop.phone}")
         print(f"\n管理员账号:")
         print(f"  - 用户名: {test_user.username}")
-        print(f"  - 密码: admin888")
+        print(f"  - 邮箱: {test_user.email}")
+        print(f"  - 密码: {DEFAULT_ADMIN_PASSWORD}")
         print(f"  - 角色: {test_user.role}")
         print("=" * 50)
 

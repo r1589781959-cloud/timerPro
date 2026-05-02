@@ -1,7 +1,10 @@
 """
 Database Models and Connection for TimerPro SaaS System
 """
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, Text, Float, Boolean, ForeignKey, UniqueConstraint
+import os
+from pathlib import Path
+
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, Text, Float, Boolean, ForeignKey, UniqueConstraint, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime
@@ -13,7 +16,9 @@ Base = declarative_base()
 # ==========================================
 
 # 同步数据库引擎（用于初始化）
-SYNC_DATABASE_URL = "sqlite:///./timerpro_saas.db"
+# 默认固定到 web_app/timerpro_saas.db，避免从不同工作目录启动时读到不同数据库。
+DB_PATH = Path(__file__).resolve().parent / "timerpro_saas.db"
+SYNC_DATABASE_URL = os.getenv("TIMERPRO_DATABASE_URL") or f"sqlite:///{DB_PATH.as_posix()}"
 sync_engine = create_engine(
     SYNC_DATABASE_URL,
     connect_args={"check_same_thread": False},
@@ -95,6 +100,8 @@ class Order(Base):
     suspend_start_ts = Column(DateTime)
     group_id = Column(String(36))
     guest_count = Column(Integer, default=1)
+    customer_code_id = Column(Integer, ForeignKey("customer_access_codes.code_id"))
+    customer_code_label = Column(String(100))
     remark = Column(Text)
     created_at = Column(DateTime, default=datetime.now)
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
@@ -104,6 +111,24 @@ class Order(Base):
     pause_logs = relationship("OrderPauseLog", back_populates="order", cascade="all, delete-orphan")
     add_times = relationship("OrderAddTime", back_populates="order", cascade="all, delete-orphan")
     group_buys = relationship("OrderGroupBuy", back_populates="order", cascade="all, delete-orphan")
+    customer_code = relationship("CustomerAccessCode", back_populates="orders")
+
+class CustomerAccessCode(Base):
+    """顾客号牌/二维码表"""
+    __tablename__ = "customer_access_codes"
+
+    code_id = Column(Integer, primary_key=True, autoincrement=True)
+    shop_id = Column(Integer, ForeignKey("shops.shop_id"), nullable=False)
+    label = Column(String(100), nullable=False)
+    token = Column(String(64), unique=True, nullable=False, index=True)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.now)
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+
+    shop = relationship("Shop")
+    orders = relationship("Order", back_populates="customer_code")
+
+    __table_args__ = (UniqueConstraint('shop_id', 'label', name='uq_shop_customer_code_label'),)
 
 class OrderPauseLog(Base):
     """暂停日志表"""
@@ -301,7 +326,19 @@ def get_db():
 def create_tables():
     """创建所有表"""
     Base.metadata.create_all(bind=engine)
+    ensure_runtime_schema()
     print("数据库表创建成功")
+
+def ensure_runtime_schema():
+    """补齐旧 SQLite 数据库缺失的新增字段。"""
+    with engine.begin() as conn:
+        table_names = {row[0] for row in conn.execute(text("SELECT name FROM sqlite_master WHERE type='table'"))}
+        if "orders" in table_names:
+            order_columns = {row[1] for row in conn.execute(text("PRAGMA table_info(orders)"))}
+            if "customer_code_id" not in order_columns:
+                conn.execute(text("ALTER TABLE orders ADD COLUMN customer_code_id INTEGER"))
+            if "customer_code_label" not in order_columns:
+                conn.execute(text("ALTER TABLE orders ADD COLUMN customer_code_label VARCHAR(100)"))
 
 def drop_tables():
     """删除所有表（谨慎使用！）"""

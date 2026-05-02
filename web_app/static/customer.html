@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>顾客查单 - TimerPro</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="min-h-screen bg-slate-100 text-slate-900">
+    <div id="app" class="min-h-screen">
+        <header class="bg-white border-b border-slate-200 sticky top-0 z-10">
+            <div class="max-w-3xl mx-auto px-4 h-14 flex items-center justify-between">
+                <div>
+                    <div class="font-bold text-lg">TimerPro</div>
+                    <div class="text-xs text-slate-500">{{ shopName }}</div>
+                </div>
+                <button @click="refresh(false)" :disabled="loading"
+                    class="w-20 h-10 rounded bg-indigo-600 text-white text-sm font-medium disabled:opacity-50 flex items-center justify-center shrink-0">
+                    刷新
+                </button>
+            </div>
+        </header>
+
+        <main class="max-w-3xl mx-auto px-4 py-5">
+            <section v-if="needsInput" class="bg-white rounded-lg border border-slate-200 p-4 mb-4">
+                <h1 class="text-lg font-bold mb-3">查询我的开台信息</h1>
+                <div v-if="manual.shopCode" class="space-y-3">
+                    <div class="rounded bg-slate-50 border border-slate-100 px-3 py-2 text-sm text-slate-600">
+                        当前门店：<span class="font-semibold text-slate-800">{{ manual.shopCode }}</span>
+                    </div>
+                    <div>
+                        <label class="block text-sm text-slate-600 mb-1">号牌编号</label>
+                        <input v-model.trim="manual.label" type="text"
+                            class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-indigo-400 focus:outline-none"
+                            placeholder="请输入手牌/号牌编号">
+                    </div>
+                    <button @click="queryByCode"
+                        class="w-full py-2.5 rounded bg-indigo-600 text-white font-medium">查询</button>
+                </div>
+                <div v-else class="rounded bg-red-50 border border-red-100 p-3 text-sm text-red-700">
+                    当前通用入口缺少门店信息，请扫描店内专属顾客入口码。
+                </div>
+            </section>
+
+            <div v-if="loading && !payload && !message" class="text-center py-12 text-slate-500">
+                <div class="w-9 h-9 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+                正在同步...
+            </div>
+
+            <section v-else-if="message && !payload" class="bg-white rounded-lg border border-slate-200 p-5 text-center">
+                <div class="text-xl font-bold mb-2">{{ message }}</div>
+                <p class="text-sm text-slate-500">请确认号牌是否正确，或联系店员处理。</p>
+            </section>
+
+            <template v-else-if="payload">
+                <section class="bg-white rounded-lg border border-slate-200 p-4 mb-4">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <div class="text-sm text-slate-500">当前号牌</div>
+                            <h1 class="text-2xl font-bold">{{ payload.access.label }}</h1>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-sm text-slate-500">同行人数</div>
+                            <div class="text-2xl font-bold">{{ payload.summary.count }}</div>
+                        </div>
+                    </div>
+                    <div class="mt-4 grid grid-cols-2 gap-3">
+                        <div class="bg-slate-50 rounded p-3">
+                            <div class="text-xs text-slate-500 mb-1">预估合计</div>
+                            <div class="text-2xl font-bold text-orange-600">¥{{ money(payload.summary.estimated_total) }}</div>
+                        </div>
+                        <div class="bg-slate-50 rounded p-3">
+                            <div class="text-xs text-slate-500 mb-1">刷新时间</div>
+                            <div class="text-base font-semibold">{{ lastUpdated }}</div>
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-3">最终金额以门店结账为准。</p>
+                </section>
+
+                <section class="space-y-3">
+                    <article v-for="order in payload.orders" :key="order.order_id"
+                        class="bg-white rounded-lg border border-slate-200 p-4">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <div class="text-xs text-slate-500">号牌</div>
+                                <div class="text-xl font-bold">{{ order.label }}</div>
+                                <div class="text-sm text-slate-500 mt-0.5">{{ order.mode_text }}</div>
+                            </div>
+                            <span class="px-2 py-1 rounded-full text-xs font-medium"
+                                :class="statusClass(order)">
+                                {{ statusText(order) }}
+                            </span>
+                        </div>
+                        <div class="mt-3 grid grid-cols-2 gap-3 text-sm">
+                            <div>
+                                <div class="text-slate-500">开始时间</div>
+                                <div class="font-medium">{{ order.start_time || '--' }}</div>
+                            </div>
+                            <div>
+                                <div class="text-slate-500">已用时长</div>
+                                <div class="font-medium">{{ order.elapsed_text }}</div>
+                            </div>
+                            <div>
+                                <div class="text-slate-500">暂停时长</div>
+                                <div class="font-medium">{{ order.pause_text }}</div>
+                            </div>
+                            <div>
+                                <div class="text-slate-500">当前预估</div>
+                                <div class="font-bold text-orange-600">¥{{ money(order.estimated_cost) }}</div>
+                            </div>
+                            <div>
+                                <div class="text-slate-500">计费包含</div>
+                                <div class="font-medium">{{ order.included_text || order.total_limit_text }}</div>
+                            </div>
+                            <div>
+                                <div class="text-slate-500">{{ order.over_sec > 0 ? '已超时' : '剩余时间' }}</div>
+                                <div class="font-medium" :class="order.over_sec > 0 ? 'text-red-600' : 'text-slate-800'">
+                                    {{ order.over_sec > 0 ? order.over_text : order.remaining_text }}
+                                </div>
+                            </div>
+                        </div>
+                        <div v-if="order.progress_percent !== null && order.progress_percent !== undefined" class="mt-3">
+                            <div class="flex justify-between text-xs mb-1">
+                                <span :class="order.over_sec > 0 ? 'text-red-600' : 'text-indigo-600'">{{ order.time_status }}</span>
+                                <span class="text-slate-500">{{ Math.min(order.progress_percent, 100).toFixed(1) }}%</span>
+                            </div>
+                            <div class="h-2 bg-slate-100 rounded overflow-hidden">
+                                <div class="h-full transition-all"
+                                    :class="order.over_sec > 0 ? 'bg-red-500' : order.time_status === '临近结束' ? 'bg-orange-400' : 'bg-indigo-500'"
+                                    :style="{ width: Math.min(order.progress_percent, 100) + '%' }"></div>
+                            </div>
+                        </div>
+                        <div v-if="order.main_group_buy || (order.added_group_buys && order.added_group_buys.length)" class="mt-3 space-y-2">
+                            <div v-if="order.main_group_buy" class="rounded border border-purple-100 bg-purple-50 p-2 text-sm">
+                                <div class="flex justify-between gap-2">
+                                    <span class="font-medium text-purple-800">{{ order.main_group_buy.name }}</span>
+                                    <span :class="order.main_group_buy.verify_status ? 'text-green-700' : 'text-red-600'">
+                                        {{ order.main_group_buy.status_text }}
+                                    </span>
+                                </div>
+                                <div class="text-xs text-purple-700 mt-1">
+                                    {{ order.main_group_buy.persons }}人券，折合 ¥{{ money(order.main_group_buy.per_person_price) }}/人
+                                </div>
+                            </div>
+                            <div v-for="gb in order.added_group_buys" :key="gb.name + gb.add_time"
+                                class="rounded border border-indigo-100 bg-indigo-50 p-2 text-sm">
+                                <div class="flex justify-between gap-2">
+                                    <span class="font-medium text-indigo-800">追加 {{ gb.name }}</span>
+                                    <span :class="gb.verify_status ? 'text-green-700' : 'text-red-600'">{{ gb.status_text }}</span>
+                                </div>
+                                <div class="text-xs text-indigo-700 mt-1">+{{ gb.minutes }}分钟，¥{{ money(gb.price) }}</div>
+                            </div>
+                        </div>
+                        <div v-if="order.added_times && order.added_times.length" class="mt-3">
+                            <div class="text-xs text-slate-500 mb-1">加时记录</div>
+                            <div class="space-y-1">
+                                <div v-for="item in order.added_times" :key="item.add_time + item.minutes"
+                                    class="flex justify-between text-sm bg-slate-50 rounded px-2 py-1">
+                                    <span>{{ item.add_time }} +{{ item.minutes }}分钟</span>
+                                    <span>¥{{ money(item.cost) }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div v-if="order.cost_items && order.cost_items.length" class="mt-3 border-t pt-3">
+                            <div class="text-xs text-slate-500 mb-1">费用明细</div>
+                            <div class="space-y-1">
+                                <div v-for="item in order.cost_items" :key="item.label"
+                                    class="flex justify-between text-sm">
+                                    <span class="text-slate-600">{{ item.label }}</span>
+                                    <span class="font-medium">{{ item.amount === null ? '--' : '¥' + money(item.amount) }}</span>
+                                </div>
+                                <div class="flex justify-between text-sm font-bold pt-1 border-t">
+                                    <span>当前预估</span>
+                                    <span class="text-orange-600">¥{{ money(order.estimated_cost) }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div v-if="order.remark" class="mt-3 text-sm text-slate-500 bg-slate-50 rounded p-2">
+                            {{ order.remark }}
+                        </div>
+                    </article>
+                </section>
+            </template>
+        </main>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                const params = new URLSearchParams(location.search);
+                return {
+                    token: params.get('t') || '',
+                    manual: {
+                        shopCode: params.get('shop') || params.get('shop_code') || params.get('s') || '',
+                        label: params.get('label') || ''
+                    },
+                    payload: null,
+                    message: '',
+                    loading: false,
+                    refreshing: false,
+                    isFetching: false,
+                    lastUpdated: '--',
+                    timer: null,
+                };
+            },
+            computed: {
+                needsInput() {
+                    return !this.token;
+                },
+                shopName() {
+                    return this.payload?.shop?.shop_name || this.manual.shopCode || '顾客端';
+                }
+            },
+            methods: {
+                money(value) {
+                    const num = Number(value || 0);
+                    return num.toFixed(2);
+                },
+                statusText(order) {
+                    if (order.is_suspended) return '挂账中';
+                    if (order.is_paused) return '暂停中';
+                    return '进行中';
+                },
+                statusClass(order) {
+                    if (order.is_suspended) return 'bg-purple-100 text-purple-700';
+                    if (order.is_paused) return 'bg-yellow-100 text-yellow-700';
+                    return 'bg-green-100 text-green-700';
+                },
+                async refresh(silent = true) {
+                    if (this.token) {
+                        await this.query(`/api/customer/by-token/${encodeURIComponent(this.token)}`, { silent });
+                    } else if (this.manual.shopCode && this.manual.label) {
+                        await this.queryByCode({ silent });
+                    }
+                },
+                async queryByCode(options = {}) {
+                    if (!this.manual.shopCode) return alert('当前链接缺少门店信息，请扫描店内专属顾客入口码');
+                    if (!this.manual.label) return alert('请输入号牌编号');
+                    const url = `/api/customer/by-code?shop_code=${encodeURIComponent(this.manual.shopCode)}&label=${encodeURIComponent(this.manual.label)}`;
+                    await this.query(url, options);
+                },
+                async query(url, options = {}) {
+                    if (this.isFetching) return;
+                    this.isFetching = true;
+                    const hasContent = !!(this.payload || this.message);
+                    const silent = options.silent !== false && hasContent;
+                    if (silent) this.refreshing = true;
+                    else {
+                        this.loading = true;
+                        this.message = '';
+                    }
+                    try {
+                        const res = await fetch(url);
+                        const data = await res.json();
+                        if (data.success) {
+                            this.payload = data;
+                            this.message = '';
+                            this.lastUpdated = new Date().toLocaleTimeString('zh-CN', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                second: '2-digit'
+                            });
+                        } else {
+                            this.payload = null;
+                            this.message = data.message || '暂未查询到订单';
+                            if (data.shop?.shop_code) this.manual.shopCode = data.shop.shop_code;
+                            if (data.access?.label) this.manual.label = data.access.label;
+                        }
+                    } catch (error) {
+                        this.payload = null;
+                        this.message = '网络异常，请稍后重试';
+                    } finally {
+                        this.loading = false;
+                        this.refreshing = false;
+                        this.isFetching = false;
+                    }
+                }
+            },
+            mounted() {
+                this.refresh(false);
+                this.timer = setInterval(() => this.refresh(true), 5000);
+            },
+            beforeUnmount() {
+                if (this.timer) clearInterval(this.timer);
+            }
+        }).mount('#app');
+    </script>
+</body>
+
+</html>

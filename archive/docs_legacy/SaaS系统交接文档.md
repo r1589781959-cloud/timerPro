@@ -153,7 +153,7 @@ E:/antigravity_project_01/
 # 检查token是否正确传递
 import requests
 headers = {"Authorization": f"Bearer {token}"}
-response = requests.get("http://localhost:8000/api/xxx", headers=headers)
+response = requests.get("http://localhost:5050/api/xxx", headers=headers)
 print(response.status_code, response.json())
 ```
 
@@ -208,10 +208,10 @@ python main_saas.py
 
 ### 5.3 访问地址
 
-- 登录页: http://localhost:8000/login.html
-- 注册页: http://localhost:8000/register.html
-- 主界面: http://localhost:8000/index.html
-- API文档: http://localhost:8000/docs
+- 登录页: http://localhost:5050/login.html
+- 注册页: http://localhost:5050/register.html
+- 主界面: http://localhost:5050/index.html
+- API文档: http://localhost:5050/docs
 
 ### 5.4 Docker部署
 
@@ -340,7 +340,7 @@ curl -X POST /api/merchants/login
 ## 十一、联系方式
 
 如有问题，请参考：
-- API文档: http://localhost:8000/docs
+- API文档: http://localhost:5050/docs
 - 完整文档: `web_app/README_SAAS.md`
 - 快速指南: `web_app/QUICKSTART.md`
 

@@ -61,7 +61,7 @@
   python init_db.py  # 首次运行需要初始化数据库
   python main_saas.py
   ```
-- **访问**: http://localhost:8000
+- **访问**: http://localhost:5050
 - **文档**: 查看 `web_app/README_SAAS.md`
 
 #### 2.2 单商家版本（旧版）

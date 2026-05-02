@@ -9,9 +9,14 @@ services:
       - "8000:8000"
     volumes:
       # 将宿主机的数据文件挂载进容器，防止重启导致数据丢失
+      - timerpro_data:/data
       - ./shop_config.json:/app/shop_config.json
       - ./active_data.json:/app/active_data.json
       - ./history_data.json:/app/history_data.json
       - ./history_log.csv:/app/history_log.csv
     environment:
       - TZ=Asia/Shanghai
+      - TIMERPRO_DATABASE_URL=sqlite:////data/timerpro_saas.db
+
+volumes:
+  timerpro_data:

@@ -25,18 +25,21 @@ load_dotenv()
 
 # 导入
 try:
-    from .database import engine, Base
+    from .database import engine, Base, ensure_runtime_schema
     from .routers import merchants as merchants_mod
     from .routers.orders import router as orders_router, tables_router, config_router
     from .routers.history import history_router
+    from .routers.customer import customer_router, customer_codes_router
 except ImportError:
-    from database import engine, Base
+    from database import engine, Base, ensure_runtime_schema
     from routers import merchants as merchants_mod
     from routers.orders import router as orders_router, tables_router, config_router
     from routers.history import history_router
+    from routers.customer import customer_router, customer_codes_router
 
 # 自动创建所有表（如果不存在）
 Base.metadata.create_all(bind=engine)
+ensure_runtime_schema()
 
 app = FastAPI(title="TimerPro SaaS")
 
@@ -55,6 +58,8 @@ app.include_router(orders_router)
 app.include_router(tables_router)
 app.include_router(config_router)
 app.include_router(history_router)
+app.include_router(customer_router)
+app.include_router(customer_codes_router)
 
 
 # 2. 静态资源路径
@@ -88,4 +93,5 @@ async def global_exception_handler(request: Request, exc: Exception):
 if __name__ == "__main__":
     import uvicorn
     # 为了兼容宝塔不同运行目录，直接传 app 实例，且生产环境关闭 reload
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    port = int(os.getenv("PORT", "5050"))
+    uvicorn.run(app, host="0.0.0.0", port=port)

@@ -85,7 +85,7 @@ cd web_app
 python main.py
 ```
 
-访问：http://localhost:8000
+访问：http://localhost:5050
 
 ### 3.3 启动SaaS版本（可选）
 
@@ -96,7 +96,7 @@ python init_db.py              # 初始化数据库
 python main_saas.py             # 启动SaaS版本
 ```
 
-访问：http://localhost:8000/login.html
+访问：http://localhost:5050/login.html
 
 ---
 
@@ -188,7 +188,7 @@ cd web_app
 python main.py
 ```
 
-访问 http://localhost:8000 即可使用原有所有功能。
+访问 http://localhost:5050 即可使用原有所有功能。
 
 ### 6.2 如果要用SaaS多商家版本
 

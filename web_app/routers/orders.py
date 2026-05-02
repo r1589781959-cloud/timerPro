@@ -2,18 +2,18 @@
 TimerPro SaaS 业务核心 (兼容性增强版)
 修复：获取账单失败/未找到订单
 1. 强制将所有传入的 orderId 转为字符串，解决数字/字符串不匹配。
-2. 移除查询时的 shop_id 限制，确保只要前端显示的单子，后端就能算出账单。
+2. 所有订单操作都按当前商家过滤，保持 SaaS 数据边界。
 3. 增加万能匹配，防止前端传参数名不一致。
 """
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 from datetime import datetime, timedelta
-import time
 import math
+import secrets
 import uuid
 
-from ..database import get_db, Shop, User, Order, SystemConfig, GroupBuy, OrderGroupBuy, OrderPauseLog, OrderAddTime
+from ..database import get_db, Shop, User, Order, SystemConfig, GroupBuy, OrderGroupBuy, OrderPauseLog, OrderAddTime, CustomerAccessCode
 from ..auth import get_current_user, get_current_shop
 
 router = APIRouter(prefix="/api", tags=["core"])
@@ -23,6 +23,32 @@ tables_router = APIRouter(prefix="/api/tables", tags=["tables"])
 def format_dt(dt):
     if not dt: return ""
     return dt.strftime("%Y-%m-%d %H:%M:%S")
+
+def find_shop_order(db: Session, shop_id: int, order_id) -> Order:
+    """按当前商家查找订单，避免跨租户按 ID 访问。"""
+    if not order_id:
+        return None
+    return db.query(Order).filter(
+        Order.order_id == str(order_id),
+        Order.shop_id == shop_id
+    ).first()
+
+def get_or_create_customer_code(db: Session, shop_id: int, label: str) -> CustomerAccessCode:
+    code = db.query(CustomerAccessCode).filter(
+        CustomerAccessCode.shop_id == shop_id,
+        CustomerAccessCode.label == label
+    ).first()
+    if code:
+        return code
+    code = CustomerAccessCode(
+        shop_id=shop_id,
+        label=label,
+        token=secrets.token_urlsafe(24),
+        is_active=True
+    )
+    db.add(code)
+    db.flush()
+    return code
 
 # ==========================================
 # 1. 列表接口 (保持高兼容性格式)
@@ -119,6 +145,8 @@ async def get_active_data(current_shop: Shop=Depends(get_current_shop), db: Sess
             d[str(o.order_id)] = {
                 "id": o.order_id,
                 "phone": o.phone,
+                "customer_code_label": getattr(o, "customer_code_label", None) or o.phone,
+                "customer_code_token": o.customer_code.token if getattr(o, "customer_code", None) else None,
                 "mode": o.mode,
                 "start_time": start_ts_str, 
                 "status": o.status or "active",
@@ -160,32 +188,66 @@ async def open_table(request: dict, current_shop: Shop=Depends(get_current_shop)
     gb_info = None
     if mode == "group_buy" and config_id:
         gid = config_id if isinstance(config_id, (int, str)) else (config_id.get("id") or config_id.get("gb_config_id"))
-        gb = db.query(GroupBuy).filter(GroupBuy.gb_config_id == gid).first()
+        gb = db.query(GroupBuy).filter(
+            GroupBuy.gb_config_id == gid,
+            GroupBuy.shop_id == current_shop.shop_id
+        ).first()
         if gb:
             gb_info = gb
             if gb.persons and gb.persons > 1: count = gb.persons
 
+    if count < 1:
+        return {"success": False, "message": "开台人数必须大于 0"}
+    if count > 20:
+        return {"success": False, "message": "单次开台人数过大，请分批开台"}
+
+    raw_identifiers = request.get("identifiers") or request.get("phones") or request.get("labels")
+    if raw_identifiers:
+        identifiers = [str(x).strip() for x in raw_identifiers if str(x).strip()]
+    else:
+        if not phone:
+            return {"success": False, "message": "请输入号牌/标识"}
+        identifiers = [f"{phone}-{i+1}" if count > 1 else str(phone).strip() for i in range(count)]
+
+    if len(identifiers) != count:
+        return {"success": False, "message": f"请填写 {count} 个号牌/标识"}
+    if len(set(identifiers)) != len(identifiers):
+        return {"success": False, "message": "号牌/标识不能重复"}
+
+    active_conflicts = db.query(Order).filter(
+        Order.shop_id == current_shop.shop_id,
+        Order.status != "finished",
+        (Order.customer_code_label.in_(identifiers)) | (Order.phone.in_(identifiers))
+    ).all()
+    if active_conflicts:
+        used = "、".join([o.customer_code_label or o.phone for o in active_conflicts])
+        return {"success": False, "message": f"号牌/标识正在使用中: {used}"}
+
     now = datetime.now()
-    id_base = int(time.time() * 10)
     group_id = str(uuid.uuid4()) if count > 1 else None
 
-    for i in range(count):
-        oid = str(id_base + i)
-        label = f"{phone}-{i+1}" if count > 1 else phone
+    created_codes = []
+    for i, label in enumerate(identifiers):
+        customer_code = get_or_create_customer_code(db, current_shop.shop_id, label)
+        oid = str(uuid.uuid4())
         order = Order(
             order_id=oid, shop_id=current_shop.shop_id,
             phone=label, mode=mode, start_time=now, 
             limit_min=gb_info.limit_min if gb_info else (int(config_id) if mode=="fixed" else 0),
             group_id=group_id, status="active",
+            customer_code_id=customer_code.code_id,
+            customer_code_label=label,
+            guest_count=count,
             created_at=now, updated_at=now
         )
         db.add(order); db.flush()
+        created_codes.append({"label": label, "token": customer_code.token})
         if gb_info:
             db.add(OrderGroupBuy(order_id=oid, gb_config_id=gb_info.gb_config_id,
                 gb_name=gb_info.name, price=gb_info.price, minutes=gb_info.limit_min,
                 add_time=now.strftime("%H:%M"), timestamp=now))
     db.commit()
-    return {"success": True, "message": "开台成功"}
+    return {"success": True, "message": "开台成功", "codes": created_codes, "group_id": group_id}
 
 # ==========================================
 # 3. 计费/结账 (修复“未找到订单”)
@@ -218,9 +280,9 @@ def get_overtime_cost_logic(over_mins: float, hourly_p: float, c) -> float:
     return round(hrs * hourly_p + rem_cost, 2)
 
 @tables_router.post("/pause")
-async def toggle_pause_table(request: dict, db: Session=Depends(get_db)):
+async def toggle_pause_table(request: dict, current_shop: Shop=Depends(get_current_shop), db: Session=Depends(get_db)):
     oid = request.get("order_id") or request.get("orderId") or request.get("id")
-    order = db.query(Order).filter(Order.order_id == str(oid)).first()
+    order = find_shop_order(db, current_shop.shop_id, oid)
     if not order: return {"success": False, "message": "未找到订单"}
     if order.status not in ["active", "paused"]: return {"success": False, "message": f"状态[{order.status}]不可操作"}
     
@@ -252,11 +314,11 @@ async def toggle_pause_table(request: dict, db: Session=Depends(get_db)):
         return {"success": True, "message": "已恢复计费"}
 
 @tables_router.post("/bill")
-async def get_table_bill(request: dict, db: Session=Depends(get_db)):
+async def get_table_bill(request: dict, current_shop: Shop=Depends(get_current_shop), db: Session=Depends(get_db)):
     oid = request.get("orderId") or request.get("id") or request.get("order_id")
     if not oid: return {"success": False, "message": "请求缺少订单ID"}
     
-    order = db.query(Order).filter(Order.order_id == str(oid)).first()
+    order = find_shop_order(db, current_shop.shop_id, oid)
     if not order:
         return {"success": False, "message": f"未找到订单({oid})"}
     
@@ -508,11 +570,11 @@ async def get_table_bill(request: dict, db: Session=Depends(get_db)):
     }
 
 @tables_router.post("/checkout")
-async def checkout_table(request: dict, db: Session=Depends(get_db)):
+async def checkout_table(request: dict, current_shop: Shop=Depends(get_current_shop), db: Session=Depends(get_db)):
     oid = request.get("order_id") or request.get("orderId") or request.get("id")
     cost = request.get("final_total") or request.get("finalTotal", 0.0)
     remark = request.get("remark", "")
-    order = db.query(Order).filter(Order.order_id == str(oid)).first()
+    order = find_shop_order(db, current_shop.shop_id, oid)
     if order:
         order.status = "finished"
         order.end_time = datetime.now()
@@ -541,9 +603,9 @@ async def checkout_table(request: dict, db: Session=Depends(get_db)):
     return {"success": False, "message": "结账失败：找不到订单"}
 
 @tables_router.delete("/{order_id}")
-async def delete_order_table(order_id: str, db: Session=Depends(get_db)):
+async def delete_order_table(order_id: str, current_shop: Shop=Depends(get_current_shop), db: Session=Depends(get_db)):
     """前端 forceCancelOrder 发送 DELETE /api/tables/{id}"""
-    order = db.query(Order).filter(Order.order_id == str(order_id)).first()
+    order = find_shop_order(db, current_shop.shop_id, order_id)
     if order:
         db.delete(order)
         db.commit()
@@ -551,10 +613,10 @@ async def delete_order_table(order_id: str, db: Session=Depends(get_db)):
     return {"success": False, "message": "找不到该订单"}
 
 @tables_router.post("/force_cancel")
-async def force_cancel_table(request: dict, db: Session=Depends(get_db)):
+async def force_cancel_table(request: dict, current_shop: Shop=Depends(get_current_shop), db: Session=Depends(get_db)):
     oid = request.get("order_id") or request.get("id")
     if not oid: return {"success": False, "message": "参数错误"}
-    order = db.query(Order).filter(Order.order_id == str(oid)).first()
+    order = find_shop_order(db, current_shop.shop_id, oid)
     if order:
         db.delete(order)
         db.commit()
@@ -562,11 +624,11 @@ async def force_cancel_table(request: dict, db: Session=Depends(get_db)):
     return {"success": False, "message": "找不到该订单"}
 
 @tables_router.post("/suspend")
-async def suspend_table(request: dict, db: Session=Depends(get_db)):
+async def suspend_table(request: dict, current_shop: Shop=Depends(get_current_shop), db: Session=Depends(get_db)):
     oid = request.get("order_id") or request.get("id")
     cost = request.get("locked_cost", 0.0)
     if not oid: return {"success": False, "message": "参数错误"}
-    order = db.query(Order).filter(Order.order_id == str(oid)).first()
+    order = find_shop_order(db, current_shop.shop_id, oid)
     if order:
         if getattr(order, "is_suspended", False):
             return {"success": False, "message": "该单已在挂账中"}
@@ -590,10 +652,10 @@ async def suspend_table(request: dict, db: Session=Depends(get_db)):
 
 @tables_router.post("/cancel_suspend")
 @tables_router.post("/cancel-suspend")
-async def cancel_suspend_table(request: dict, db: Session=Depends(get_db)):
+async def cancel_suspend_table(request: dict, current_shop: Shop=Depends(get_current_shop), db: Session=Depends(get_db)):
     oid = request.get("order_id") or request.get("id")
     if not oid: return {"success": False, "message": "参数错误"}
-    order = db.query(Order).filter(Order.order_id == str(oid)).first()
+    order = find_shop_order(db, current_shop.shop_id, oid)
     if order:
         if not getattr(order, "is_suspended", False):
             return {"success": False, "message": "该单未处于挂账状态"}
@@ -620,25 +682,25 @@ async def cancel_suspend_table(request: dict, db: Session=Depends(get_db)):
 # ==========================================
 
 @tables_router.post("/remark")
-async def update_remark(request: dict, db: Session=Depends(get_db)):
+async def update_remark(request: dict, current_shop: Shop=Depends(get_current_shop), db: Session=Depends(get_db)):
     oid = request.get("order_id") or request.get("id")
     remark = request.get("remark", "")
     if not oid: return {"success": False, "message": "参数错误"}
-    order = db.query(Order).filter(Order.order_id == str(oid)).first()
+    order = find_shop_order(db, current_shop.shop_id, oid)
     if not order: return {"success": False, "message": "找不到订单"}
     order.remark = remark
     db.commit()
     return {"success": True, "message": "备注已更新"}
 
 @tables_router.post("/verify")
-async def toggle_verify(request: dict, db: Session=Depends(get_db)):
+async def toggle_verify(request: dict, current_shop: Shop=Depends(get_current_shop), db: Session=Depends(get_db)):
     """切换团购核销状态(主团购 or 附属团购券)"""
     oid = request.get("order_id") or request.get("id")
     verified = request.get("verified", False)
     added_gb_index = request.get("added_gb_index")
     if not oid: return {"success": False, "message": "参数错误"}
     
-    order = db.query(Order).filter(Order.order_id == str(oid)).first()
+    order = find_shop_order(db, current_shop.shop_id, oid)
     if not order: return {"success": False, "message": "找不到订单"}
     
     all_gbs = db.query(OrderGroupBuy).filter(
@@ -669,6 +731,7 @@ async def toggle_verify(request: dict, db: Session=Depends(get_db)):
         # 联动同 group_id 的其他成员
         if order.group_id:
             sibling_orders = db.query(Order).filter(
+                Order.shop_id == current_shop.shop_id,
                 Order.group_id == order.group_id,
                 Order.order_id != order.order_id
             ).all()
@@ -702,13 +765,13 @@ async def toggle_verify(request: dict, db: Session=Depends(get_db)):
     return {"success": True, "message": f"核销状态已更新为: {status_text}"}
 
 @tables_router.post("/add-time")
-async def add_time(request: dict, db: Session=Depends(get_db)):
+async def add_time(request: dict, current_shop: Shop=Depends(get_current_shop), db: Session=Depends(get_db)):
     """加时间(直接加分钟数) or 加团购券(从配置中选一个团购方案追加)"""
     oid = request.get("order_id") or request.get("id")
     mode = request.get("mode", "direct")  # "direct" or "group_buy"
     if not oid: return {"success": False, "message": "参数错误"}
     
-    order = db.query(Order).filter(Order.order_id == str(oid)).first()
+    order = find_shop_order(db, current_shop.shop_id, oid)
     if not order: return {"success": False, "message": "找不到订单"}
     
     cfg = db.query(SystemConfig).filter(SystemConfig.shop_id == order.shop_id).first()

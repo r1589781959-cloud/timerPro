@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 import secrets
 import json
 
-from ..database import get_db, Shop, User, SystemConfig, GroupBuy, VerifyCode
+from ..database import get_db, Shop, User, Order, SystemConfig, GroupBuy, VerifyCode
 from ..auth import (
     RegisterRequest, LoginRequest, SendVerifyCodeRequest,
     CheckShopCodeRequest, Token, jwt_service, password_service,
@@ -598,8 +598,6 @@ async def get_merchant_stats(
     db: Session = Depends(get_db)
 ):
     """获取商家统计信息"""
-    from database import Order, User, GroupBuy
-
     # 活跃订单数
     active_orders = db.query(Order).filter(
         Order.shop_id == current_shop.shop_id,

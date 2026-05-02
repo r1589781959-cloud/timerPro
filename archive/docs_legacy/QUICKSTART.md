@@ -31,7 +31,8 @@ python init_db.py
 
 管理员账号:
   - 用户名: admin
-  - 密码: admin888
+  - 邮箱: admin@timerpro.local
+  - 密码: admin123
   - 角色: admin
 ============================================================
 ```
@@ -61,11 +62,11 @@ INFO:     Application startup complete.
 
 使用默认账号登录：
 - **用户名**: `admin`
-- **密码**: `admin888`
+- **密码**: `admin123`
 
-或者使用手机号：
-- **手机号**: `13800138000`
-- **密码**: `admin888`
+或者使用邮箱：
+- **邮箱**: `admin@timerpro.local`
+- **密码**: `admin123`
 
 ## 注册新商家
 
@@ -83,7 +84,7 @@ INFO:     Application startup complete.
 # 发送验证码
 curl -X POST http://localhost:8000/api/merchants/verify-code/send \
   -H "Content-Type: application/json" \
-  -d '{"phone": "13900139000", "code_type": "register"}'
+  -d '{"email": "owner@example.com", "code_type": "register"}'
 
 # 注册商家
 curl -X POST http://localhost:8000/api/merchants/register \
@@ -91,7 +92,7 @@ curl -X POST http://localhost:8000/api/merchants/register \
   -d '{
     "shop_name": "我的店铺",
     "shop_code": "myshop001",
-    "contact_phone": "13900139000",
+    "email": "owner@example.com",
     "admin_name": "店长",
     "password": "password123",
     "password_confirm": "password123",

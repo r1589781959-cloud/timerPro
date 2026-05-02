@@ -225,17 +225,27 @@
                     <h2 class="text-lg font-semibold mb-4 text-gray-800">➕ 开台操作</h2>
 
                     <div class="mb-3 flex gap-2">
-                        <div class="flex-1">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">标识号/台号</label>
-                            <input v-model="newOrder.phone" type="text"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                                placeholder="输入标识或台号">
-                        </div>
                         <div class="w-20">
                             <label class="block text-sm font-medium text-gray-700 mb-1" title="支持连坐">数量</label>
-                            <input v-model.number="newOrder.count" type="number" min="1" max="50"
+                            <input v-model.number="newOrder.count" @change="onCountInput" type="number" min="1" max="20"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-center"
                                 placeholder="1">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="block text-sm font-medium text-gray-700">顾客号牌/标识</label>
+                            <span class="text-xs text-gray-400">一人一号牌</span>
+                        </div>
+                        <div class="space-y-2">
+                            <div v-for="(label, idx) in newOrder.identifiers" :key="'identifier-'+idx"
+                                class="flex items-center gap-2">
+                                <span class="w-7 text-xs text-gray-500 text-right">{{ idx + 1 }}.</span>
+                                <input v-model.trim="newOrder.identifiers[idx]" type="text"
+                                    class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                    :placeholder="'输入第 ' + (idx + 1) + ' 位顾客号牌'">
+                            </div>
                         </div>
                     </div>
 
@@ -262,7 +272,7 @@
                     <!-- 团购选择 -->
                     <div v-if="newOrder.mode === 'group_buy'" class="mb-3">
                         <label class="block text-sm font-medium text-gray-700 mb-1">选择团购</label>
-                        <select v-model="newOrder.configId" class="w-full px-3 py-2 border rounded-lg">
+                        <select v-model="newOrder.configId" @change="onPackageChange" class="w-full px-3 py-2 border rounded-lg">
                             <option v-for="gb in groupBuys" :key="gb.name" :value="gb">
                                 {{ gb.name }} - ¥{{ gb.price }} ({{ gb.persons }}人)
                             </option>
@@ -272,7 +282,7 @@
                     <!-- 时段优惠选择 -->
                     <div v-if="newOrder.mode === 'time_slot'" class="mb-3">
                         <label class="block text-sm font-medium text-gray-700 mb-1">时段优惠</label>
-                        <select v-model="newOrder.configId" class="w-full px-3 py-2 border rounded-lg">
+                        <select v-model="newOrder.configId" @change="onPackageChange" class="w-full px-3 py-2 border rounded-lg">
                             <option v-for="ts in timeSlots" :key="ts.name" :value="ts">
                                 {{ ts.name }} - ¥{{ ts.price }} ({{ ts.start_time }}-{{ ts.end_time }})
                             </option>
@@ -289,7 +299,7 @@
                         ¥{{ shopConfig?.price_single_board || 39.9 }}
                     </div>
 
-                    <button @click="openTable" :disabled="!newOrder.phone"
+                    <button @click="openTable" :disabled="!canSubmitOpenOrder"
                         class="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed btn-action">
                         🚀 开 台
                     </button>
@@ -301,7 +311,7 @@
                         <h2 class="text-lg font-semibold text-gray-800">
                             📋 正在制作 ({{ activeOrders.length }})
                         </h2>
-                        <button @click="fetchActiveData" :disabled="ordersLoading"
+                        <button @click="fetchActiveData({ silent: false })" :disabled="ordersLoading"
                             class="text-indigo-600 hover:text-indigo-800 disabled:opacity-50 transition p-1" title="刷新">
                             <svg class="w-5 h-5" :class="{ 'animate-spin': ordersLoading }" fill="none"
                                 stroke="currentColor" viewBox="0 0 24 24">
@@ -1089,6 +1099,38 @@
                             </div>
                         </div>
                     </div>
+
+                    <div class="mt-8 mb-3 flex items-center justify-between border-b pb-2">
+                        <h3 class="font-bold text-gray-700">📱 顾客号牌码</h3>
+                        <button @click="fetchCustomerCodes"
+                            class="px-2 py-1 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded hover:bg-indigo-100 text-xs">刷新</button>
+                    </div>
+                    <div class="bg-gray-50 border rounded p-3">
+                        <div class="mb-3 rounded border border-indigo-100 bg-indigo-50 p-3 text-xs">
+                            <div class="font-bold text-indigo-800 mb-1">本店通用顾客入口</div>
+                            <div class="text-indigo-700 break-all">{{ customerUniversalUrl || '点击刷新后生成本店入口链接' }}</div>
+                            <p class="mt-1 text-indigo-500">这个链接做成店内通用二维码，顾客扫码后只需要输入自己的号牌/标识。</p>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button @click="openCustomerCodeModal"
+                                class="bg-slate-700 text-white py-2 rounded hover:bg-slate-800 text-sm">
+                                管理号牌码
+                            </button>
+                            <button @click="downloadCustomerExport('universal', 'qr')"
+                                class="bg-white border border-slate-300 text-slate-700 py-2 rounded hover:bg-slate-50 text-sm">
+                                导出通用入口二维码
+                            </button>
+                            <button @click="downloadCustomerExport('universal', 'nfc')"
+                                class="bg-white border border-slate-300 text-slate-700 py-2 rounded hover:bg-slate-50 text-sm">
+                                导出通用入口NFC
+                            </button>
+                            <button @click="downloadCustomerExport('all', 'bundle')"
+                                class="bg-white border border-slate-300 text-slate-700 py-2 rounded hover:bg-slate-50 text-sm">
+                                下载全部物料包
+                            </button>
+                        </div>
+                        <p class="mt-2 text-xs text-gray-400">号牌生成、二维码导出和 NFC 写入清单在弹窗内统一处理，避免设置页过长。</p>
+                    </div>
                     <div class="mt-4 flex justify-end gap-3 pt-4 border-t border-gray-100">
                         <button @click="editingConfig = null; fetchConfig()"
                             class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">取消重置</button>
@@ -1106,6 +1148,96 @@
         </div>
 
         </main>
+
+        <div v-if="customerCodeModal" class="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+            <div class="bg-white w-full max-w-3xl max-h-[90vh] overflow-hidden rounded-lg shadow-xl flex flex-col">
+                <div class="px-5 py-4 border-b flex items-center justify-between">
+                    <div>
+                        <h3 class="font-bold text-lg text-gray-800">顾客号牌码管理</h3>
+                        <p class="text-xs text-gray-500 mt-1">生成可复用号牌，导出二维码和 NFC 链接清单。</p>
+                    </div>
+                    <button @click="customerCodeModal=false" class="text-gray-400 hover:text-gray-700 text-2xl leading-none">&times;</button>
+                </div>
+                <div class="p-5 overflow-y-auto space-y-4">
+                    <div class="rounded border border-indigo-100 bg-indigo-50 p-3 text-xs">
+                        <div class="font-bold text-indigo-800 mb-1">本店通用入口二维码内容</div>
+                        <div class="text-indigo-700 break-all">{{ customerUniversalUrl || '刷新后显示' }}</div>
+                    </div>
+
+                    <div class="flex gap-2 text-sm">
+                        <button @click="codeCreateMode='range'"
+                            :class="codeCreateMode==='range' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700'"
+                            class="px-3 py-1.5 rounded">连续编号</button>
+                        <button @click="codeCreateMode='custom'"
+                            :class="codeCreateMode==='custom' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700'"
+                            class="px-3 py-1.5 rounded">自定义号牌</button>
+                    </div>
+
+                    <div v-if="codeCreateMode==='range'" class="grid grid-cols-3 gap-2 text-sm">
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-1">前缀</label>
+                            <input v-model="codeBatch.prefix" class="w-full border rounded px-2 py-1" placeholder="可空">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-1">起始</label>
+                            <input v-model.number="codeBatch.start" type="number" min="1"
+                                class="w-full border rounded px-2 py-1">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-1">结束</label>
+                            <input v-model.number="codeBatch.end" type="number" min="1"
+                                class="w-full border rounded px-2 py-1">
+                        </div>
+                    </div>
+
+                    <div v-else class="text-sm">
+                        <label class="block text-xs text-gray-500 mb-1">自定义号牌，一行一个，或用逗号/空格分隔</label>
+                        <textarea v-model="customCodeLabels" rows="5"
+                            class="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-indigo-400 focus:outline-none"
+                            placeholder="A01&#10;A02&#10;小熊&#10;VIP-1"></textarea>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <button @click="generateCustomerCodes"
+                            class="bg-slate-700 text-white py-2 rounded hover:bg-slate-800 text-sm">
+                            生成/补齐号牌
+                        </button>
+                        <button @click="downloadCustomerExport('badges', 'qr')"
+                            class="bg-green-600 text-white py-2 rounded hover:bg-green-700 text-sm">
+                            下载号牌二维码
+                        </button>
+                        <button @click="downloadCustomerExport('badges', 'nfc')"
+                            class="bg-white border border-slate-300 text-slate-700 py-2 rounded hover:bg-slate-50 text-sm">
+                            下载号牌NFC文件
+                        </button>
+                        <button @click="downloadCustomerExport('all', 'bundle')"
+                            class="bg-white border border-slate-300 text-slate-700 py-2 rounded hover:bg-slate-50 text-sm">
+                            下载全部物料包
+                        </button>
+                    </div>
+
+                    <div class="rounded border bg-gray-50 p-3 text-xs text-gray-500">
+                        二维码导出时会询问是否在底部附带号牌标识；NFC 文件会按通用入口/每个号牌分别生成 <span class="font-mono">.txt</span>，写入时使用文件内 URL。
+                    </div>
+
+                    <div v-if="customerCodes.length" class="border rounded overflow-hidden">
+                        <div class="px-3 py-2 bg-gray-50 border-b text-sm font-semibold text-gray-700">
+                            已有号牌 {{ customerCodes.length }} 个
+                        </div>
+                        <div class="max-h-72 overflow-y-auto">
+                            <div v-for="code in customerCodes" :key="code.code_id"
+                                class="px-3 py-2 border-b last:border-b-0 text-xs">
+                                <div class="font-bold text-gray-800">{{ code.label }}</div>
+                                <div class="text-gray-500 break-all">{{ code.url }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div v-else class="text-center py-6 text-sm text-gray-400 border rounded">
+                        暂无号牌，先生成一批或输入自定义号牌。
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -1117,7 +1249,7 @@
                 return {
                     shopInfo: storedShop ? JSON.parse(storedShop) : { shop_name: 'TimerPro', shop_code: 'SaaS' },
                     currentTab: 'pos',
-                    newOrder: { phone: '', mode: 'pay_later', configId: null, count: 1 },
+                    newOrder: { phone: '', mode: 'pay_later', configId: null, count: 1, identifiers: [''] },
                     shopConfig: null,
                     activeOrders: [],
                     rawOrderData: {},
@@ -1163,6 +1295,12 @@
 
                     // 系统设置
                     editingConfig: null,
+                    customerUniversalUrl: '',
+                    customerCodes: [],
+                    customerCodeModal: false,
+                    codeCreateMode: 'range',
+                    customCodeLabels: '',
+                    codeBatch: { prefix: '', start: 1, end: 50 },
                 };
             },
 
@@ -1181,6 +1319,10 @@
                 countdownGroupBuys() {
                     if (!this.shopConfig || !this.shopConfig.group_buys) return [];
                     return this.shopConfig.group_buys.filter(gb => gb.type === 'fixed' && (gb.persons || 1) === 1);
+                },
+                canSubmitOpenOrder() {
+                    const labels = this.getOpenIdentifiers();
+                    return labels.length === Number(this.newOrder.count || 1) && labels.every(Boolean);
                 },
                 teamMembersInCheckout() {
                     if (!this.checkoutModal.order || !this.checkoutModal.order.groupId) return [];
@@ -1234,8 +1376,10 @@
                     // 排序逻辑
                     const sortMode = this.orderSortMode;
                     list.sort((a, b) => {
-                        if (sortMode === 'id_desc') return parseInt(b.id) - parseInt(a.id);
-                        if (sortMode === 'id_asc') return parseInt(a.id) - parseInt(b.id);
+                        const ta = new Date(((this.rawOrderData[a.id] || {}).start_time || '').replace(/-/g, '/')).getTime() || 0;
+                        const tb = new Date(((this.rawOrderData[b.id] || {}).start_time || '').replace(/-/g, '/')).getTime() || 0;
+                        if (sortMode === 'id_desc') return tb - ta || String(b.id).localeCompare(String(a.id));
+                        if (sortMode === 'id_asc') return ta - tb || String(a.id).localeCompare(String(b.id));
                         if (sortMode === 'phone_asc') return (a.phone || '').localeCompare(b.phone || '', 'zh-CN');
                         if (sortMode === 'progress_desc') {
                             const cA = this.getOrderCountdown(a);
@@ -1277,6 +1421,36 @@
                         'pay_later': '先玩后付', 'fixed': '普通定额', 'unlimited': '全天畅玩',
                         'single_board': '单板不限时', 'group_buy': '团购套餐', 'time_slot': '时段优惠'
                     }[mode] || mode;
+                },
+                getOpenIdentifiers() {
+                    return (this.newOrder.identifiers || []).map(v => (v || '').trim()).filter(Boolean);
+                },
+                syncIdentifierInputs(targetCount) {
+                    let count = parseInt(targetCount || 1);
+                    if (!Number.isFinite(count) || count < 1) count = 1;
+                    if (count > 20) count = 20;
+                    const oldValues = this.newOrder.identifiers || [];
+                    const next = [];
+                    for (let i = 0; i < count; i++) next.push(oldValues[i] || '');
+                    this.newOrder.count = count;
+                    this.newOrder.identifiers = next;
+                },
+                onCountInput() {
+                    let count = parseInt(this.newOrder.count || 1);
+                    if (!Number.isFinite(count) || count < 1) count = 1;
+                    if (count > 20) {
+                        alert('单次开台人数最多 20 人，请分批开台');
+                        count = 20;
+                    } else if (count > 8 && this.newOrder.identifiers.length <= 8) {
+                        if (!confirm(`将生成 ${count} 个号牌输入框，确认继续吗？`)) count = 8;
+                    }
+                    this.syncIdentifierInputs(count);
+                },
+                onPackageChange() {
+                    const cfg = this.newOrder.configId;
+                    if (cfg && cfg.persons && Number(cfg.persons) > 1) {
+                        this.syncIdentifierInputs(Number(cfg.persons));
+                    }
                 },
                 getGroupClass(groupId) {
                     if (!groupId) return '';
@@ -1367,7 +1541,10 @@
 
                     return { percent, remainText };
                 },
-                onModeChange() { this.newOrder.configId = null; },
+                onModeChange() {
+                    this.newOrder.configId = null;
+                    this.syncIdentifierInputs(this.newOrder.count || 1);
+                },
 
                 canAddTime(order) {
                     if (order.isSuspended) return false;
@@ -1508,8 +1685,9 @@
                 // ==========================================
                 // --- 数据获取 ---
                 // ==========================================
-                async fetchActiveData() {
-                    this.ordersLoading = true;
+                async fetchActiveData(options = {}) {
+                    const silent = options.silent !== false && this.activeOrders.length > 0;
+                    if (!silent) this.ordersLoading = true;
                     this.ordersError = null;
                     try {
                         const res = await fetch('/api/data/active');
@@ -1770,17 +1948,28 @@
                     URL.revokeObjectURL(url);
                 },
                 async openTable() {
-                    if (!this.newOrder.phone) return alert('请输入标识号或台号');
+                    this.onCountInput();
+                    const identifiers = Array.from(new Set(this.getOpenIdentifiers()));
+                    if (identifiers.length !== Number(this.newOrder.count || 1)) return alert(`请填写 ${this.newOrder.count} 个不重复的号牌/标识`);
                     if (this.newOrder.mode === 'fixed' && !this.newOrder.configId) return alert('请输入定额时长');
                     if (this.newOrder.mode === 'group_buy' && !this.newOrder.configId) return alert('请选择团购套餐');
                     if (this.newOrder.mode === 'time_slot' && !this.newOrder.configId) return alert('请选择时段优惠');
                     try {
                         const r = await fetch('/api/tables/open', {
                             method: 'POST', headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ phone: this.newOrder.phone, mode: this.newOrder.mode, configId: this.newOrder.configId, count: this.newOrder.count })
+                            body: JSON.stringify({ phone: identifiers[0], identifiers, mode: this.newOrder.mode, configId: this.newOrder.configId, count: this.newOrder.count })
                         });
                         const res = await r.json();
-                        if (res.success) { this.newOrder.phone = ''; this.newOrder.configId = null; this.newOrder.count = 1; await this.fetchActiveData(); alert('✅ ' + res.message); }
+                        if (res.success) {
+                            this.newOrder.phone = '';
+                            this.newOrder.configId = null;
+                            this.newOrder.count = 1;
+                            this.newOrder.identifiers = [''];
+                            await this.fetchActiveData();
+                            alert('✅ ' + res.message);
+                        } else {
+                            alert('开台失败: ' + (res.message || '未知错误'));
+                        }
                     } catch (e) { alert('开台失败: ' + e.message); }
                 },
 
@@ -2146,6 +2335,88 @@
                         if (el) el.scrollTop = 0;
                     });
                 },
+                async fetchCustomerCodes() {
+                    try {
+                        const r = await fetch('/api/customer-codes');
+                        const res = await r.json();
+                        if (res.success) {
+                            this.customerUniversalUrl = res.universal_url || '';
+                            this.customerCodes = res.codes || [];
+                        }
+                    } catch (e) { alert('获取号牌码失败: ' + e.message); }
+                },
+                async openCustomerCodeModal() {
+                    this.customerCodeModal = true;
+                    await this.fetchCustomerCodes();
+                },
+                async generateCustomerCodes() {
+                    let body;
+                    if (this.codeCreateMode === 'custom') {
+                        const labels = this.customCodeLabels
+                            .split(/[\n,，;；\s]+/)
+                            .map(v => v.trim())
+                            .filter(Boolean);
+                        const uniqueLabels = [...new Set(labels)];
+                        if (!uniqueLabels.length) return alert('请输入至少一个自定义号牌');
+                        if (uniqueLabels.length > 500) return alert('单次最多生成 500 个号牌');
+                        body = { labels: uniqueLabels };
+                    } else {
+                        const start = parseInt(this.codeBatch.start || 1);
+                        const end = parseInt(this.codeBatch.end || 1);
+                        if (end < start) return alert('结束编号不能小于起始编号');
+                        if ((end - start + 1) > 500) return alert('单次最多生成 500 个号牌');
+                        body = { prefix: this.codeBatch.prefix || '', start, end };
+                    }
+                    try {
+                        const r = await fetch('/api/customer-codes/batch', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(body)
+                        });
+                        const res = await r.json();
+                        if (res.success) {
+                            this.customerUniversalUrl = res.universal_url || '';
+                            await this.fetchCustomerCodes();
+                            if (this.codeCreateMode === 'custom') this.customCodeLabels = '';
+                            alert(`✅ 已生成/补齐 ${res.codes?.length || 0} 个号牌链接`);
+                        } else {
+                            alert('生成失败: ' + res.message);
+                        }
+                    } catch (e) { alert('生成号牌码失败: ' + e.message); }
+                },
+                async downloadCustomerExport(scope = 'all', asset = 'bundle') {
+                    const includeLabel = asset === 'nfc'
+                        ? false
+                        : confirm('二维码底部是否附带号牌/入口标识？\n选择“确定”会在二维码下方印上标识，适合直接打印；选择“取消”则只导出纯二维码。');
+                    try {
+                        const qs = new URLSearchParams({
+                            scope,
+                            asset,
+                            include_label: includeLabel ? '1' : '0'
+                        });
+                        const r = await fetch('/api/customer-codes/export?' + qs.toString());
+                        if (!r.ok) {
+                            let msg = '下载失败';
+                            try {
+                                const data = await r.json();
+                                msg = data.detail || data.message || msg;
+                            } catch (_) { }
+                            return alert(msg);
+                        }
+                        const blob = await r.blob();
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        const ext = asset === 'qr' && scope === 'universal' ? 'png' : 'zip';
+                        a.download = `timerpro_customer_${scope}_${asset}_${Date.now()}.${ext}`;
+                        document.body.appendChild(a);
+                        a.click();
+                        a.remove();
+                        URL.revokeObjectURL(url);
+                    } catch (e) {
+                        alert('下载顾客物料失败: ' + e.message);
+                    }
+                },
                 async saveConfig() {
                     try {
                         const r = await fetch('/api/config/shop', {
@@ -2171,6 +2442,7 @@
                     if (v === 'history') this.fetchHistory();
                     if (v === 'settings') {
                         if (this.shopConfig) this.editingConfig = JSON.parse(JSON.stringify(this.shopConfig));
+                        this.fetchCustomerCodes();
                         this.fetchAuthStatus();
                     }
                 }
@@ -2182,8 +2454,8 @@
                 if (!token) { window.location.href = '/login.html'; return; }
 
                 this.fetchConfig();
-                this.fetchActiveData();
-                this.refreshTimer = setInterval(() => this.fetchActiveData(), 30000);
+                this.fetchActiveData({ silent: false });
+                this.refreshTimer = setInterval(() => this.fetchActiveData({ silent: true }), 30000);
                 this.startLocalTimer();
             },
             beforeUnmount() {

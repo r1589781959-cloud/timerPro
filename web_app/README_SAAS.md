@@ -39,14 +39,15 @@ python init_db.py  # 首次运行：创建所有基础数据库结构
 ### 2. 启动服务 
 
 ```bash
-python main_saas.py  # 默认在 8000 端口启动
+python main_saas.py  # 默认在 5050 端口启动
 ```
 
 ### 3. 访问入口 (本地测试)
 
-- **主入口(自动拦截未登录)**: `http://localhost:8000/index.html`
-- **注册页面**: `http://localhost:8000/register.html`
-- **登录页面**: `http://localhost:8000/login.html`
+- **主入口(自动拦截未登录)**: `http://localhost:5050/index.html`
+- **注册页面**: `http://localhost:5050/register.html`
+- **登录页面**: `http://localhost:5050/login.html`
+- **超级管理后台**: `http://localhost:5051` （需管理员账号密码）
 
 ---
 
@@ -68,6 +69,7 @@ python main_saas.py  # 默认在 8000 端口启动
 - [x] iOS/Mac Safari 计时器归零漏洞终极修复
 - [x] SaaS设置项全面引入悬浮 Tooltip 专业级提示气泡
 - [x] 单机/连坐同行订单一键批量结账逻辑
+- [x] 独立超级管理后台 (端口 5051，HTTP Basic Auth 认证)
 - [ ] 增加演示模式/沙盒临时店功能 (规划中)
 - [ ] 系统数据报表大屏可视化 (规划中)
 - [ ] 日志追溯与错误上报中心 (规划中)
