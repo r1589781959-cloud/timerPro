@@ -272,7 +272,8 @@
                     <!-- 团购选择 -->
                     <div v-if="newOrder.mode === 'group_buy'" class="mb-3">
                         <label class="block text-sm font-medium text-gray-700 mb-1">选择团购</label>
-                        <select v-model="newOrder.configId" @change="onPackageChange" class="w-full px-3 py-2 border rounded-lg">
+                        <select v-model="newOrder.configId" @change="onPackageChange"
+                            class="w-full px-3 py-2 border rounded-lg">
                             <option v-for="gb in groupBuys" :key="gb.name" :value="gb">
                                 {{ gb.name }} - ¥{{ gb.price }} ({{ gb.persons }}人)
                             </option>
@@ -282,7 +283,8 @@
                     <!-- 时段优惠选择 -->
                     <div v-if="newOrder.mode === 'time_slot'" class="mb-3">
                         <label class="block text-sm font-medium text-gray-700 mb-1">时段优惠</label>
-                        <select v-model="newOrder.configId" @change="onPackageChange" class="w-full px-3 py-2 border rounded-lg">
+                        <select v-model="newOrder.configId" @change="onPackageChange"
+                            class="w-full px-3 py-2 border rounded-lg">
                             <option v-for="ts in timeSlots" :key="ts.name" :value="ts">
                                 {{ ts.name }} - ¥{{ ts.price }} ({{ ts.start_time }}-{{ ts.end_time }})
                             </option>
@@ -651,7 +653,7 @@
                         class="mb-4 bg-blue-50 border border-blue-200 p-3 rounded-lg flex flex-col justify-between">
                         <div class="text-sm text-blue-800 mb-2 flex justify-between items-center">
                             <span><strong>👥 连坐同开订单 (共 {{ teamMembersInCheckout.length + 1 }}
-                                    台)</strong><br>可一键批量结出同组所有机器。</span>
+                                    台)</strong><br>可一键批量结出同组所有订单。</span>
                             <button @click="confirmTeamCheckout"
                                 class="px-4 py-2 bg-blue-600 text-white rounded font-bold hover:bg-blue-700 btn-action text-sm whitespace-nowrap">一键全结</button>
                         </div>
@@ -752,7 +754,7 @@
                 <div class="bg-gradient-to-r from-red-500 to-orange-500 px-6 py-4 text-white text-center">
                     <div class="text-4xl mb-1">⏰</div>
                     <h3 class="text-xl font-bold">超时预警提醒</h3>
-                    <p class="text-red-100 text-sm mt-1">以下机位已超出预定时长</p>
+                    <p class="text-red-100 text-sm mt-1">以下订单已超时</p>
                 </div>
                 <div class="px-6 py-4 max-h-60 overflow-y-auto">
                     <div v-for="item in overtimeAlert.items" :key="item.id"
@@ -968,7 +970,8 @@
                                 计费缓冲缓冲 (分钟)
                                 <div class="tooltip text-red-400 group">
                                     <i class="ri-alert-line text-[15px]"></i>
-                                    <span class="tooltip-text border border-red-500 shadow-red-200">重要参数：顾客超时多少分钟内不额外扣费。例如设置为10，玩了1小时9分钟只收1小时的钱。这是提供人情味的容错机制。</span>
+                                    <span
+                                        class="tooltip-text border border-red-500 shadow-red-200">重要参数：顾客超时多少分钟内不额外扣费。例如设置为10，玩了1小时9分钟只收1小时的钱。这是提供人情味的容错机制。</span>
                                 </div>
                             </label>
                             <input v-model.number="editingConfig.buffer_min" type="number"
@@ -980,7 +983,8 @@
                         进阶阶梯计速参数 (仅选择阶梯算法时生效)
                         <div class="tooltip text-indigo-500">
                             <i class="ri-information-line text-lg"></i>
-                            <span class="tooltip-text">阶梯算法适用于将计算切割为多个"块(计费周期)"的场景。例如：每10分钟收费5元，不满规定时间也可按逻辑进行舍去。这是一种更贴近实体的分段计费模型。</span>
+                            <span
+                                class="tooltip-text">阶梯算法适用于将计算切割为多个"块(计费周期)"的场景。例如：每10分钟收费5元，不满规定时间也可按逻辑进行舍去。这是一种更贴近实体的分段计费模型。</span>
                         </div>
                     </h3>
                     <div class="grid grid-cols-2 gap-4">
@@ -1030,7 +1034,8 @@
                                 抹零免单界限 X(分)
                                 <div class="tooltip text-indigo-400">
                                     <i class="ri-question-line text-[15px]"></i>
-                                    <span class="tooltip-text">阶梯算法下的独立缓冲时间。每一个新的计费块开始时，前 X 分钟内结出不会被视作进入了这一个收费块（等于该计费块免单）。</span>
+                                    <span class="tooltip-text">阶梯算法下的独立缓冲时间。每一个新的计费块开始时，前 X
+                                        分钟内结出不会被视作进入了这一个收费块（等于该计费块免单）。</span>
                                 </div>
                             </label>
                             <input v-model.number="editingConfig.ceil_x" type="number"
@@ -1156,7 +1161,8 @@
                         <h3 class="font-bold text-lg text-gray-800">顾客号牌码管理</h3>
                         <p class="text-xs text-gray-500 mt-1">生成可复用号牌，导出二维码和 NFC 链接清单。</p>
                     </div>
-                    <button @click="customerCodeModal=false" class="text-gray-400 hover:text-gray-700 text-2xl leading-none">&times;</button>
+                    <button @click="customerCodeModal=false"
+                        class="text-gray-400 hover:text-gray-700 text-2xl leading-none">&times;</button>
                 </div>
                 <div class="p-5 overflow-y-auto space-y-4">
                     <div class="rounded border border-indigo-100 bg-indigo-50 p-3 text-xs">
@@ -2128,7 +2134,7 @@
                     } catch (e) { alert('操作失败: ' + e.message); }
                 },
                 async forceCancelOrder(id, phone) {
-                    if (!confirm(`确定要直接废弃/移除机位【${phone}】吗？\n警告：这会强行取消该次开台并且不留下任何财务结算和历史记录！`)) return;
+                    if (!confirm(`确定要直接废弃/移除订单【${phone}】吗？\n警告：这会强行取消该次开台并且不留下任何财务结算和历史记录！`)) return;
                     try {
                         const r = await fetch(`/api/tables/${id}`, { method: 'DELETE' });
                         if (r.ok) {

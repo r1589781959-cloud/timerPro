@@ -197,6 +197,58 @@ class SMTPService:
             print(f"[邮件发送失败] {to_email}: {e}")
             return False
 
+    def send_welcome_email(self, to_email: str, shop_name: str, admin_name: str, shop_code: str) -> bool:
+        """发送开通成功告知邮件"""
+        import smtplib
+        from email.mime.text import MIMEText
+        from email.mime.multipart import MIMEMultipart
+
+        if not self.host or not self.user or not self.password:
+            print(f"[SMTP未配置 - 开通通知] {to_email}: {shop_name}")
+            return True
+
+        subject = f"欢迎加入 TimerPro 智能计时收银系统！"
+        html_body = f"""
+        <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px; border: 1px solid #e5e7eb; border-radius: 16px;">
+            <div style="text-align: center; margin-bottom: 24px;">
+                <h1 style="color: #4f46e5; margin: 0; font-size: 24px;">TimerPro</h1>
+                <p style="color: #6b7280; margin: 4px 0 0; font-size: 14px;">智能计时收银系统</p>
+            </div>
+            <div style="background: #f8fafc; border-radius: 12px; padding: 24px; text-align: left; margin-bottom: 20px;">
+                <p style="color: #374151; font-size: 16px; margin: 0 0 12px;">尊敬的 <b>{admin_name}</b>，您好！</p>
+                <p style="color: #4b5563; font-size: 14px; line-height: 1.6;">
+                    您的商家账号已成功开通！<br><br>
+                    <b>商家名称：</b> {shop_name}<br>
+                    <b>商家编码：</b> <span style="color:#4f46e5;font-weight:bold;">{shop_code}</span><br>
+                    <b>登录账号：</b> {to_email}<br><br>
+                    您可以立即使用此账号登录 TimerPro 系统，开始体验高效的门店管理。
+                </p>
+            </div>
+            <p style="color: #9ca3af; font-size: 12px; text-align: center; margin: 0;">TimerPro 团队敬上</p>
+        </div>
+        """
+
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"] = f"{self.from_name} <{self.user}>"
+        msg["To"] = to_email
+        msg.attach(MIMEText(html_body, "html", "utf-8"))
+
+        try:
+            if self.port == 465:
+                with smtplib.SMTP_SSL(self.host, self.port, timeout=10) as server:
+                    server.login(self.user, self.password)
+                    server.sendmail(self.user, to_email, msg.as_string())
+            else:
+                with smtplib.SMTP(self.host, self.port, timeout=10) as server:
+                    server.starttls()
+                    server.login(self.user, self.password)
+                    server.sendmail(self.user, to_email, msg.as_string())
+            print(f"[开通邮件已发送] {to_email}")
+            return True
+        except Exception as e:
+            print(f"[开通邮件发送失败] {to_email}: {e}")
+            return False
 
 # 单例实例
 jwt_service = JWTService()
@@ -231,7 +283,7 @@ class RegisterRequest(BaseModel):
     admin_name: str
     password: str
     password_confirm: str
-    verify_code: str
+    verify_code: Optional[str] = None
     address: Optional[str] = None
     description: Optional[str] = None
 
@@ -239,6 +291,7 @@ class LoginRequest(BaseModel):
     shop_code: Optional[str] = None
     email: str              # 登录邮箱
     password: str
+    remember: Optional[bool] = False
 
 class SendVerifyCodeRequest(BaseModel):
     email: str

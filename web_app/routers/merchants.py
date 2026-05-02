@@ -141,23 +141,7 @@ async def register_merchant(
             detail="该邮箱已注册"
         )
 
-    # 5. 验证邮箱验证码
-    now = datetime.now()
-    verify_code_record = db.query(VerifyCode).filter(
-        VerifyCode.email == request.email,
-        VerifyCode.code == request.verify_code,
-        VerifyCode.code_type == "register",
-        VerifyCode.is_used == False,
-        VerifyCode.expire_at > now
-    ).first()
-
-    if not verify_code_record:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="验证码错误或已过期"
-        )
-
-    # 6. 生成商家编码（如果未指定）
+    # 5. 生成商家编码（如果未指定）
     if not request.shop_code:
         # 基于店铺名称生成拼音简写 + 随机数
         base_code = "shop"  # 简化处理，实际可以使用拼音转换库
@@ -265,11 +249,18 @@ async def register_merchant(
         ]
         db.bulk_save_objects(default_group_buys)
 
-        # 标记验证码为已使用
-        verify_code_record.is_used = True
-        verify_code_record.used_at = now
-
         db.commit()
+
+        # 发送开通成功欢迎邮件 (不阻塞主流程，即使失败也不回滚)
+        try:
+            smtp_service.send_welcome_email(
+                to_email=new_shop.email,
+                shop_name=new_shop.name,
+                admin_name=new_user.real_name,
+                shop_code=new_shop.shop_code
+            )
+        except Exception as e:
+            print(f"Failed to send welcome email: {e}")
 
         # 11. 生成JWT Token
         token_data = {
@@ -361,8 +352,11 @@ async def login(
         "role": user.role
     }
 
-    access_token = jwt_service.create_access_token(token_data)
-    refresh_token = jwt_service.create_refresh_token(token_data)
+    # 如果勾选了记住我，让 Token 有效期延长到 30 天
+    expires_delta = timedelta(days=30) if request.remember else None
+
+    access_token = jwt_service.create_access_token(token_data, expires_delta=expires_delta)
+    refresh_token = jwt_service.create_refresh_token(token_data, expires_delta=expires_delta)
 
     return Token(
         access_token=access_token,
@@ -383,6 +377,98 @@ async def login(
         }
     )
 
+@router.post("/login/guest", response_model=Token)
+async def login_guest(db: Session = Depends(get_db)):
+    """游客免密体验登录"""
+    guest_email = "guest@timerpro.com"
+    user = db.query(User).filter(User.email == guest_email).first()
+
+    # 如果游客账号不存在，自动创建一个
+    if not user:
+        try:
+            # 1. 创建商家记录
+            new_shop = Shop(
+                name="TimerPro 演示店铺",
+                shop_code="demo",
+                email=guest_email,
+                address="虚拟演示地址",
+                status=1
+            )
+            db.add(new_shop)
+            db.flush()
+
+            # 2. 创建管理员用户
+            user = User(
+                shop_id=new_shop.shop_id,
+                username=guest_email,
+                email=guest_email,
+                password_hash=password_service.hash_password("123456"),
+                role="admin",
+                real_name="体验官"
+            )
+            db.add(user)
+            db.flush()
+
+            # 3. 初始化系统配置
+            default_config = SystemConfig(
+                shop_id=new_shop.shop_id,
+                price_base=10.9, time_base=60, price_overtime=10.9,
+                buffer_min=10, calc_mode="step", step_n=10, step_y=2.0, step_k=2.0,
+                ceil_x=5, price_unlimited=59.9, price_single_board=39.9,
+                price_fixed_60=19.9, price_fixed_120=35.0, price_fixed_180=49.9
+            )
+            db.add(default_config)
+
+            # 4. 添加默认团购配置
+            default_group_buys = [
+                GroupBuy(shop_id=new_shop.shop_id, name="🎫 双人全天畅玩", type="unlimited", price=88.0, persons=2, limit_min=0, start_time="00:00", end_time="23:59", sort_order=1),
+                GroupBuy(shop_id=new_shop.shop_id, name="🎫 单人2小时特惠", type="fixed", price=17.9, persons=1, limit_min=120, start_time="00:00", end_time="23:59", sort_order=2)
+            ]
+            db.bulk_save_objects(default_group_buys)
+
+            db.commit()
+            
+            # 获取刚刚创建的shop
+            shop = new_shop
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(status_code=500, detail=f"创建演示账号失败: {str(e)}")
+    else:
+        shop = db.query(Shop).filter(Shop.shop_id == user.shop_id).first()
+        user.last_login_at = datetime.now()
+        db.commit()
+
+    # 5. 生成JWT Token
+    token_data = {
+        "sub": user.username,
+        "shop_id": user.shop_id,
+        "user_id": user.user_id,
+        "role": user.role
+    }
+
+    # 游客登录默认较短有效期
+    expires_delta = timedelta(days=1)
+    access_token = jwt_service.create_access_token(token_data, expires_delta=expires_delta)
+    refresh_token = jwt_service.create_refresh_token(token_data, expires_delta=expires_delta)
+
+    return Token(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        shop={
+            "shop_id": shop.shop_id,
+            "shop_code": shop.shop_code,
+            "shop_name": shop.name,
+            "email": shop.email,
+            "address": shop.address
+        },
+        user={
+            "user_id": user.user_id,
+            "username": user.username,
+            "role": user.role,
+            "real_name": user.real_name,
+            "email": user.email
+        }
+    )
 
 @router.post("/refresh")
 async def refresh_token(

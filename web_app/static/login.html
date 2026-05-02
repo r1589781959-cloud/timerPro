@@ -127,6 +127,12 @@
                         class="btn-primary w-full py-3 rounded-xl text-white font-semibold text-lg disabled:opacity-60 disabled:cursor-not-allowed">
                         {{ isLogging ? '登录中...' : '登录' }}
                     </button>
+                    
+                    <!-- 游客模式 -->
+                    <button type="button" @click="handleGuestLogin" :disabled="isLogging"
+                        class="w-full py-3 rounded-xl text-indigo-600 font-semibold text-lg bg-indigo-50 hover:bg-indigo-100 transition-colors disabled:opacity-60 disabled:cursor-not-allowed border border-indigo-200">
+                        <i class="ri-user-smile-line mr-1"></i> 游客模式体验
+                    </button>
                 </form>
             </transition>
 
@@ -206,7 +212,8 @@
                             body: JSON.stringify({
                                 shop_code: this.loginForm.shopCode || undefined,
                                 email: this.loginForm.email,
-                                password: this.loginForm.password
+                                password: this.loginForm.password,
+                                remember: this.loginForm.remember
                             })
                         })
 
@@ -232,6 +239,37 @@
                     } catch (error) {
                         this.errorMessage = '登录失败，请稍后重试'
                         console.error('Login error:', error)
+                    } finally {
+                        this.isLogging = false
+                    }
+                },
+                async handleGuestLogin() {
+                    this.isLogging = true
+                    this.errorMessage = ''
+                    try {
+                        const response = await fetch('/api/merchants/login/guest', {
+                            method: 'POST'
+                        })
+
+                        if (response.ok) {
+                            const data = await response.json()
+                            localStorage.setItem('access_token', data.access_token)
+                            localStorage.setItem('refresh_token', data.refresh_token)
+                            localStorage.setItem('shop_code', data.shop.shop_code)
+                            localStorage.setItem('shop_info', JSON.stringify({
+                                shop_name: data.shop.shop_name,
+                                shop_code: data.shop.shop_code,
+                                username: data.user.real_name || data.user.username,
+                                email: data.user.email
+                            }))
+                            this.redirectToHome()
+                        } else {
+                            const data = await response.json()
+                            this.errorMessage = data.detail || '游客模式创建失败，请稍后再试'
+                        }
+                    } catch (error) {
+                        this.errorMessage = '网络错误，请稍后重试'
+                        console.error('Guest login error:', error)
                     } finally {
                         this.isLogging = false
                     }

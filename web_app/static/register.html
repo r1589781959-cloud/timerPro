@@ -241,21 +241,6 @@
                 <!-- 步骤2: 验证和完成 -->
                 <div v-else-if="currentStep === 2" key="step2">
                     <form @submit.prevent="submitRegister" class="space-y-5">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">邮箱验证码 *</label>
-                            <div class="flex gap-3">
-                                <input v-model="form.verifyCode" type="text"
-                                    class="input-field flex-1 px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none"
-                                    placeholder="请输入6位验证码" maxlength="6" required>
-                                <button type="button" @click="sendVerifyCode" :disabled="sendingCode || countdown > 0"
-                                    class="btn-primary px-6 py-3 rounded-xl text-white font-medium whitespace-nowrap">
-                                    {{ sendingCode ? '发送中...' : countdown > 0 ? `${countdown}秒后重发` : '发送验证码' }}
-                                </button>
-                            </div>
-                            <p class="mt-1 text-xs text-gray-500">
-                                验证码已发送至您的邮箱，请注意查收（可能在垃圾邮件中）
-                            </p>
-                        </div>
 
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">店铺地址</label>
@@ -410,47 +395,8 @@
 
                     this.currentStep = 2
                 },
-                async sendVerifyCode() {
-                    if (this.countdown > 0) return
 
-                    this.sendingCode = true
-                    try {
-                        const response = await fetch('/api/merchants/verify-code/send', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({
-                                email: this.form.email,
-                                code_type: 'register'
-                            })
-                        })
-
-                        if (response.ok) {
-                            this.countdown = 60
-                            const timer = setInterval(() => {
-                                this.countdown--
-                                if (this.countdown <= 0) {
-                                    clearInterval(timer)
-                                }
-                            }, 1000)
-                        } else {
-                            const data = await response.json()
-                            alert(data.detail || '发送失败')
-                        }
-                    } catch (error) {
-                        alert('发送失败，请稍后重试')
-                    } finally {
-                        this.sendingCode = false
-                    }
-                },
-                async submitRegister() {
-                    if (!this.form.verifyCode) {
-                        alert('请输入验证码')
-                        return
-                    }
-
-                    this.submitting = true
+                async submitRegister() {                    this.submitting = true
                     try {
                         const response = await fetch('/api/merchants/register', {
                             method: 'POST',
@@ -464,7 +410,6 @@
                                 admin_name: this.form.adminName,
                                 password: this.form.password,
                                 password_confirm: this.form.passwordConfirm,
-                                verify_code: this.form.verifyCode,
                                 address: this.form.address || undefined,
                                 description: this.form.description || undefined
                             })
