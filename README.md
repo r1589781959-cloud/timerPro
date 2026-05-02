@@ -29,13 +29,17 @@
 │   ├── auth.py             # 认证和 JWT 服务
 │   ├── routers/            # API 路由模块
 │   │   ├── merchants.py   # 商家管理 API
-│   │   └── orders.py      # 订单管理 API
+│   │   ├── orders.py      # 订单管理 API
+│   │   ├── history.py     # 历史流水 API
+│   │   └── customer.py    # 顾客端二维码/号牌 API
 │   ├── static/             # 静态文件
 │   │   ├── index.html     # 主界面
 │   │   ├── login.html     # 登录页面
 │   │   └── register.html  # 注册页面
 │   ├── test_saas.py       # SaaS 测试脚本
+│   ├── .env               # 环境变量配置 (SMTP邮件等)
 │   ├── requirements.txt   # 依赖清单
+│   ├── timerpro_saas.db   # SaaS专属 SQLite 数据库
 │   └── README_SAAS.md    # SaaS 文档
 └── xcx_client/              # 微信小程序（保持不变）
     ├── cloudfunctions/     # 云函数
@@ -58,6 +62,7 @@
 - **启动**:
   ```bash
   cd web_app
+  # 创建 .env 环境变量文件并配置发件邮箱 (可参考 README_SAAS.md)
   python init_db.py  # 首次运行需要初始化数据库
   python main_saas.py
   ```
@@ -79,13 +84,16 @@
 - **技术**: 微信小程序原生开发
 - **注意**: 开发中，保持原样
 
-## 共享依赖
+## 数据存储说明
 
-所有版本共享以下数据文件：
-- `shop_config.json` - 店铺配置
-- `active_data.json` - 活跃数据（桌号、包厢状态等）
-- `history_data.json` - 历史数据
-- `history_log.csv` - 操作日志
+不同版本使用不同的数据存储方式：
+- **桌面版（V15）/ 旧版 Web单商家** 使用本地 JSON 文件存储数据：
+  - `shop_config.json` - 店铺配置
+  - `active_data.json` - 活跃数据（桌号、包厢状态等）
+  - `history_data.json` - 历史数据
+  - `history_log.csv` - 操作日志
+- **SaaS 多商家版本** 完全独立，使用真正的关系型数据库引擎：
+  - `web_app/timerpro_saas.db` - 隔离了多租户数据的 SQLite 数据库
 
 ## 整理说明
 
